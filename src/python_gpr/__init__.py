@@ -16,7 +16,7 @@ except ImportError:
     __version__ = "0.1.0"
 
 __author__ = "Keenan Johnson"
-__email__ = "keenan@example.com"
+__email__ = "keenan.johnson@gmail.com"
 __description__ = "Python bindings for the GPR (General Purpose Raw) library"
 
 # Import main functionality when available

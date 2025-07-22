@@ -68,7 +68,8 @@ imaging = [
 
 [project.urls]
 Homepage = "https://github.com/keenanjohnson/python-gpr"
-Documentation = "https://python-gpr.readthedocs.io"
+# FIXME: Add documentation URL when available
+# Documentation = "https://python-gpr.readthedocs.io"
 Repository = "https://github.com/keenanjohnson/python-gpr.git"
 Issues = "https://github.com/keenanjohnson/python-gpr/issues"
 
