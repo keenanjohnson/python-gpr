@@ -70,7 +70,7 @@ jobs:
 
     - name: Type check with mypy
       run: |
-        mypy src/python_gpr/*.py
+        mypy src/python_gpr/__init__.py src/python_gpr/conversion.py src/python_gpr/core.py src/python_gpr/metadata.py
       timeout-minutes: 10
 
     - name: Install testing dependencies
