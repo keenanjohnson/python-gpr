@@ -9,6 +9,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
     - uses: actions/checkout@v4
 
@@ -33,11 +34,14 @@ jobs:
     - name: Lint with black
       run: |
         black --check --diff src/ tests/
+      timeout-minutes: 5
 
     - name: Lint with flake8
       run: |
         flake8 src/ tests/
+      timeout-minutes: 5
 
     - name: Type check with mypy
       run: |
         mypy src/
+      timeout-minutes: 10
