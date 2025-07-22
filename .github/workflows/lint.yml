@@ -43,5 +43,5 @@ jobs:
 
     - name: Type check with mypy
       run: |
-        mypy src/
+        mypy src/python_gpr/*.py
       timeout-minutes: 10

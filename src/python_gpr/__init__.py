@@ -24,16 +24,18 @@ try:
     from .core import *
     from .conversion import *
     from .metadata import *
+
     # Import C++ core module
     from ._core import *
 except ImportError as e:
     # Bindings not yet available - this is expected during initial development
     import warnings
+
     warnings.warn(f"Some modules could not be imported: {e}", ImportWarning)
 
 __all__ = [
     "__version__",
-    "__author__", 
+    "__author__",
     "__email__",
     "__description__",
 ]
