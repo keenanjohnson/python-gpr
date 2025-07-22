@@ -24,9 +24,12 @@ try:
     from .core import *
     from .conversion import *
     from .metadata import *
-except ImportError:
+    # Import C++ core module
+    from ._core import *
+except ImportError as e:
     # Bindings not yet available - this is expected during initial development
-    pass
+    import warnings
+    warnings.warn(f"Some modules could not be imported: {e}", ImportWarning)
 
 __all__ = [
     "__version__",
