@@ -45,5 +45,5 @@ PYBIND11_MODULE(_core, m) {
         .def("is_gpr_file", &GPRCore::is_gpr_file, "Check if file is a GPR file")
         .def("get_file_info", &GPRCore::get_file_info, "Get information about a GPR file");
     
-    m.attr("__version__") = py::str(VERSION_INFO);
+    m.attr("__version__") = VERSION_INFO;
 }

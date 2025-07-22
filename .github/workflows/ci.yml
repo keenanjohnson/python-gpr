@@ -53,11 +53,10 @@ jobs:
           ${{ runner.os }}-pip-${{ matrix.python-version }}-
           ${{ runner.os }}-pip-
 
-    - name: Install Python dependencies
+    - name: Install linting dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install build wheel
-        python -m pip install -e ".[dev]"
+        python -m pip install black flake8 mypy
 
     - name: Lint with black
       run: |
@@ -73,6 +72,10 @@ jobs:
       run: |
         mypy src/python_gpr/*.py
       timeout-minutes: 10
+
+    - name: Install testing dependencies
+      run: |
+        python -m pip install pytest pytest-cov toml
 
     - name: Test with pytest
       run: |
