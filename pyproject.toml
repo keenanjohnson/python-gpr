@@ -14,7 +14,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "Apache-2.0 OR MIT"}
 authors = [
-    {name = "Keenan Johnson", email = "keenan@example.com"}
+    {name = "Keenan Johnson", email = "keenan.johnson@gmail.com"}
 ]
 keywords = [
     "gpr",
@@ -82,12 +82,11 @@ install.components = ["Development"]
 CMAKE_BUILD_TYPE = "Release"
 
 # Cross-platform compatibility settings
-[tool.scikit-build.cmake.args]
-# On Windows, use static runtime
-# This ensures compatibility across different Windows configurations
-windows = ["-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded"]
-# On macOS, set minimum version for compatibility
-macos = ["-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"]
+[tool.scikit-build.cmake]
+# Common cmake arguments for all platforms
+args = []
+# Platform-specific arguments can be set via environment variables or
+# conditional logic in CMakeLists.txt
 
 [tool.setuptools_scm]
 version_file = "src/python_gpr/_version.py"
