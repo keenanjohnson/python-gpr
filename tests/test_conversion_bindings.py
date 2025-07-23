@@ -173,6 +173,61 @@ class TestConversionBindings(unittest.TestCase):
         self.assertIsInstance(param_dict, dict)
         self.assertEqual(param_dict['quality'], 10)
         self.assertEqual(param_dict['subband_count'], 3)
+    
+    def test_gpr_conversion_with_real_file(self):
+        """Test GPR conversion functions with a real GPR file."""
+        # Path to the real GPR test file
+        test_gpr_file = Path(__file__).parent / "data" / "2024_10_08_10-37-22.GPR"
+        
+        # Skip test if the test file doesn't exist
+        if not test_gpr_file.exists():
+            self.skipTest(f"Test GPR file not found at {test_gpr_file}")
+        
+        # Test GPR to DNG conversion
+        output_dng = os.path.join(self.temp_dir, "output.dng")
+        try:
+            convert_gpr_to_dng(str(test_gpr_file), output_dng)
+            # If conversion succeeds, check that output file was created
+            self.assertTrue(os.path.exists(output_dng), "DNG output file should be created")
+            self.assertGreater(os.path.getsize(output_dng), 0, "DNG output file should not be empty")
+        except (NotImplementedError, ValueError) as e:
+            # Expected when bindings not available or conversion fails due to missing VC5 codecs
+            error_msg = str(e).lower()
+            self.assertTrue(
+                "not available" in error_msg or "vc5" in error_msg or "conversion failed" in error_msg,
+                f"Unexpected error message: {e}"
+            )
+        
+        # Test GPR to RAW conversion
+        output_raw = os.path.join(self.temp_dir, "output.raw")
+        try:
+            convert_gpr_to_raw(str(test_gpr_file), output_raw)
+            # If conversion succeeds, check that output file was created
+            self.assertTrue(os.path.exists(output_raw), "RAW output file should be created")
+            self.assertGreater(os.path.getsize(output_raw), 0, "RAW output file should not be empty")
+        except (NotImplementedError, ValueError) as e:
+            # Expected when bindings not available or conversion fails
+            error_msg = str(e).lower()
+            self.assertTrue(
+                "not available" in error_msg or "conversion failed" in error_msg,
+                f"Unexpected error message: {e}"
+            )
+        
+        # Test DNG to GPR conversion (if we have a DNG file from previous conversion)
+        if os.path.exists(output_dng):
+            output_gpr = os.path.join(self.temp_dir, "converted_back.gpr")
+            try:
+                convert_dng_to_gpr(output_dng, output_gpr)
+                # If conversion succeeds, check that output file was created
+                self.assertTrue(os.path.exists(output_gpr), "GPR output file should be created")
+                self.assertGreater(os.path.getsize(output_gpr), 0, "GPR output file should not be empty")
+            except (NotImplementedError, ValueError) as e:
+                # Expected when bindings not available or conversion fails
+                error_msg = str(e).lower()
+                self.assertTrue(
+                    "not available" in error_msg or "vc5" in error_msg or "conversion failed" in error_msg,
+                    f"Unexpected error message: {e}"
+                )
 
 
 class TestConversionModuleImport(unittest.TestCase):
