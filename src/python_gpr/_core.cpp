@@ -1,5 +1,15 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <string>
+#include <fstream>
+#include <stdexcept>
+
+// Include GPR headers
+extern "C" {
+    #include "gpr.h"
+    #include "gpr_buffer.h"
+    #include "gpr_allocator.h"
+}
 
 namespace py = pybind11;
 
@@ -18,17 +28,370 @@ std::string greet(const std::string& name) {
     return "Hello, " + name + "!";
 }
 
-PYBIND11_MODULE(_core, m) {
-    m.doc() = "Minimal pybind11 hello world binding";
+// Custom exception for GPR conversion errors
+class GPRConversionError : public std::runtime_error {
+public:
+    GPRConversionError(const std::string& message) : std::runtime_error("GPR Conversion Error: " + message) {}
+};
+
+// Helper function to read file into gpr_buffer
+bool read_file_to_buffer(const std::string& filepath, gpr_buffer* buffer, const gpr_allocator* allocator) {
+    if (read_from_file(buffer, filepath.c_str(), allocator->Alloc, allocator->Free) != 0) {
+        return false;
+    }
+    return true;
+}
+
+// Helper function to write gpr_buffer to file
+bool write_buffer_to_file(const gpr_buffer* buffer, const std::string& filepath) {
+    return write_to_file(buffer, filepath.c_str()) == 0;
+}
+
+// Helper function to validate file exists
+void validate_input_file(const std::string& filepath) {
+    std::ifstream file(filepath);
+    if (!file.good()) {
+        throw GPRConversionError("Input file does not exist or cannot be read: " + filepath);
+    }
+}
+
+// GPR to DNG conversion function
+bool convert_gpr_to_dng(const std::string& input_path, const std::string& output_path) {
+    validate_input_file(input_path);
     
-    // Basic hello world function
+    // Set up allocator
+    gpr_allocator allocator;
+    allocator.Alloc = gpr_global_malloc;
+    allocator.Free = gpr_global_free;
+    
+    // Initialize buffers
+    gpr_buffer input_buffer = {nullptr, 0};
+    gpr_buffer output_buffer = {nullptr, 0};
+    
+    try {
+        // Read input file
+        if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+            throw GPRConversionError("Failed to read input GPR file: " + input_path);
+        }
+        
+        // Set up default parameters
+        gpr_parameters parameters;
+        gpr_parameters_set_defaults(&parameters);
+        
+        // Perform GPR to DNG conversion
+        bool success = gpr_convert_gpr_to_dng(&allocator, &parameters, &input_buffer, &output_buffer);
+        
+        if (!success) {
+            throw GPRConversionError("GPR to DNG conversion failed");
+        }
+        
+        // Write output file
+        if (!write_buffer_to_file(&output_buffer, output_path)) {
+            throw GPRConversionError("Failed to write output DNG file: " + output_path);
+        }
+        
+        // Clean up parameters
+        gpr_parameters_destroy(&parameters, allocator.Free);
+        
+        // Clean up buffers
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        
+        return true;
+        
+    } catch (const GPRConversionError&) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw; // Re-throw GPRConversionError
+    } catch (const std::exception& e) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unexpected error during conversion: " + std::string(e.what()));
+    } catch (...) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unknown error during GPR to DNG conversion");
+    }
+}
+
+// DNG to GPR conversion function
+bool convert_dng_to_gpr(const std::string& input_path, const std::string& output_path) {
+    validate_input_file(input_path);
+    
+    // Set up allocator
+    gpr_allocator allocator;
+    allocator.Alloc = gpr_global_malloc;
+    allocator.Free = gpr_global_free;
+    
+    // Initialize buffers
+    gpr_buffer input_buffer = {nullptr, 0};
+    gpr_buffer output_buffer = {nullptr, 0};
+    
+    try {
+        // Read input file
+        if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+            throw GPRConversionError("Failed to read input DNG file: " + input_path);
+        }
+        
+        // Set up default parameters
+        gpr_parameters parameters;
+        gpr_parameters_set_defaults(&parameters);
+        
+        // Perform DNG to GPR conversion
+        bool success = gpr_convert_dng_to_gpr(&allocator, &parameters, &input_buffer, &output_buffer);
+        
+        if (!success) {
+            throw GPRConversionError("DNG to GPR conversion failed");
+        }
+        
+        // Write output file
+        if (!write_buffer_to_file(&output_buffer, output_path)) {
+            throw GPRConversionError("Failed to write output GPR file: " + output_path);
+        }
+        
+        // Clean up parameters
+        gpr_parameters_destroy(&parameters, allocator.Free);
+        
+        // Clean up buffers
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        
+        return true;
+        
+    } catch (const GPRConversionError&) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw; // Re-throw GPRConversionError
+    } catch (const std::exception& e) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unexpected error during conversion: " + std::string(e.what()));
+    } catch (...) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unknown error during DNG to GPR conversion");
+    }
+}
+
+// GPR to RAW conversion function
+bool convert_gpr_to_raw(const std::string& input_path, const std::string& output_path) {
+    validate_input_file(input_path);
+    
+    // Set up allocator
+    gpr_allocator allocator;
+    allocator.Alloc = gpr_global_malloc;
+    allocator.Free = gpr_global_free;
+    
+    // Initialize buffers
+    gpr_buffer input_buffer = {nullptr, 0};
+    gpr_buffer output_buffer = {nullptr, 0};
+    
+    try {
+        // Read input file
+        if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+            throw GPRConversionError("Failed to read input GPR file: " + input_path);
+        }
+        
+        // Perform GPR to RAW conversion
+        bool success = gpr_convert_gpr_to_raw(&allocator, &input_buffer, &output_buffer);
+        
+        if (!success) {
+            throw GPRConversionError("GPR to RAW conversion failed");
+        }
+        
+        // Write output file
+        if (!write_buffer_to_file(&output_buffer, output_path)) {
+            throw GPRConversionError("Failed to write output RAW file: " + output_path);
+        }
+        
+        // Clean up buffers
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        
+        return true;
+        
+    } catch (const GPRConversionError&) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw; // Re-throw GPRConversionError
+    } catch (const std::exception& e) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unexpected error during conversion: " + std::string(e.what()));
+    } catch (...) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unknown error during GPR to RAW conversion");
+    }
+}
+
+// Add a working DNG to DNG function to demonstrate the binding works
+bool convert_dng_to_dng(const std::string& input_path, const std::string& output_path) {
+    validate_input_file(input_path);
+    
+    // Set up allocator
+    gpr_allocator allocator;
+    allocator.Alloc = gpr_global_malloc;
+    allocator.Free = gpr_global_free;
+    
+    // Initialize buffers
+    gpr_buffer input_buffer = {nullptr, 0};
+    gpr_buffer output_buffer = {nullptr, 0};
+    
+    try {
+        // Read input file
+        if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+            throw GPRConversionError("Failed to read input DNG file: " + input_path);
+        }
+        
+        // Set up default parameters
+        gpr_parameters parameters;
+        gpr_parameters_set_defaults(&parameters);
+        
+        // Perform conversion
+        bool success = gpr_convert_dng_to_dng(&allocator, &parameters, &input_buffer, &output_buffer);
+        
+        if (!success) {
+            throw GPRConversionError("DNG to DNG conversion failed");
+        }
+        
+        // Write output file
+        if (!write_buffer_to_file(&output_buffer, output_path)) {
+            throw GPRConversionError("Failed to write output DNG file: " + output_path);
+        }
+        
+        // Clean up parameters
+        gpr_parameters_destroy(&parameters, allocator.Free);
+        
+        // Clean up buffers
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        
+        return true;
+        
+    } catch (const GPRConversionError&) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw; // Re-throw GPRConversionError
+    } catch (const std::exception& e) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unexpected error during conversion: " + std::string(e.what()));
+    } catch (...) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unknown error during DNG to DNG conversion");
+    }
+}
+
+PYBIND11_MODULE(_core, m) {
+    m.doc() = "Python GPR Core Conversion Functions";
+    
+    // Register custom exception
+    py::register_exception<GPRConversionError>(m, "GPRConversionError");
+    
+    // Basic hello world function for testing
     m.def("hello_world", &hello_world, "A simple hello world function");
     
-    // Simple math function
+    // Simple math function for testing
     m.def("add", &add, "Add two integers");
     
-    // String manipulation function
+    // String manipulation function for testing
     m.def("greet", &greet, "Greet someone by name");
+    
+    // Core GPR conversion functions
+    m.def("convert_gpr_to_dng", &convert_gpr_to_dng, 
+          "Convert GPR file to DNG format",
+          py::arg("input_path"), py::arg("output_path"));
+    
+    m.def("convert_dng_to_gpr", &convert_dng_to_gpr,
+          "Convert DNG file to GPR format", 
+          py::arg("input_path"), py::arg("output_path"));
+    
+    m.def("convert_gpr_to_raw", &convert_gpr_to_raw,
+          "Convert GPR file to RAW format",
+          py::arg("input_path"), py::arg("output_path"));
+    
+    // Additional conversion function that works with current build
+    m.def("convert_dng_to_dng", &convert_dng_to_dng,
+          "Convert DNG file to DNG format (reprocess)",
+          py::arg("input_path"), py::arg("output_path"));
     
     // Version information
     m.attr("__version__") = py::str(VERSION_INFO);

@@ -79,6 +79,9 @@ set(GPR_READING 1 CACHE BOOL "Enable GPR reading")
 set(GPR_WRITING 1 CACHE BOOL "Enable GPR writing") 
 set(GPR_JPEG_AVAILABLE 0 CACHE BOOL "Disable JPEG support for minimal build")
 
+# Force position-independent code for static libraries
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # Build GPR library
 add_subdirectory(gpr EXCLUDE_FROM_ALL)
 
@@ -121,9 +124,11 @@ target_link_libraries(_core PRIVATE ${GPR_LIBRARIES})
 
 # Include directories for GPR headers
 target_include_directories(_core PRIVATE
-    gpr/source/lib/gpr_sdk
+    gpr/source/lib/gpr_sdk/public
+    gpr/source/lib/gpr_sdk/private
     gpr/source/lib/dng_sdk
-    gpr/source/lib/common
+    gpr/source/lib/common/public
+    gpr/source/lib/common/private
     gpr/source/lib/vc5_common
     gpr/source/lib/xmp_core
     gpr/source/lib/expat_lib
