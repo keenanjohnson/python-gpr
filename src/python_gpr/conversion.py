@@ -46,7 +46,7 @@ def convert_gpr_to_dng(input_path: str, output_path: str,
     Args:
         input_path: Path to input GPR file
         output_path: Path for output DNG file  
-        parameters: Optional conversion parameters
+        parameters: Optional conversion parameters (currently unused)
         
     Raises:
         FileNotFoundError: If input file does not exist
@@ -55,8 +55,15 @@ def convert_gpr_to_dng(input_path: str, output_path: str,
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"Input file not found: {input_path}")
     
-    # Placeholder - will be implemented with actual GPR bindings
-    raise NotImplementedError("GPR bindings not yet implemented")
+    try:
+        from ._core import convert_gpr_to_dng as _convert_gpr_to_dng
+        from ._core import GPRConversionError
+        
+        _convert_gpr_to_dng(input_path, output_path)
+    except GPRConversionError as e:
+        raise ValueError(str(e)) from e
+    except ImportError:
+        raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
 
 
 def convert_dng_to_gpr(input_path: str, output_path: str,
@@ -67,7 +74,7 @@ def convert_dng_to_gpr(input_path: str, output_path: str,
     Args:
         input_path: Path to input DNG file
         output_path: Path for output GPR file
-        parameters: Optional conversion parameters
+        parameters: Optional conversion parameters (currently unused)
         
     Raises:
         FileNotFoundError: If input file does not exist
@@ -76,8 +83,15 @@ def convert_dng_to_gpr(input_path: str, output_path: str,
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"Input file not found: {input_path}")
     
-    # Placeholder - will be implemented with actual GPR bindings
-    raise NotImplementedError("GPR bindings not yet implemented")
+    try:
+        from ._core import convert_dng_to_gpr as _convert_dng_to_gpr
+        from ._core import GPRConversionError
+        
+        _convert_dng_to_gpr(input_path, output_path)
+    except GPRConversionError as e:
+        raise ValueError(str(e)) from e
+    except ImportError:
+        raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
 
 
 def convert_gpr_to_raw(input_path: str, output_path: str,
@@ -86,9 +100,9 @@ def convert_gpr_to_raw(input_path: str, output_path: str,
     Convert GPR file to RAW format.
     
     Args:
-        input_path: Path to input GPR file
+        input_path: Path to input GPR file (or DNG file)
         output_path: Path for output RAW file
-        parameters: Optional conversion parameters
+        parameters: Optional conversion parameters (currently unused)
         
     Raises:
         FileNotFoundError: If input file does not exist
@@ -97,8 +111,43 @@ def convert_gpr_to_raw(input_path: str, output_path: str,
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"Input file not found: {input_path}")
     
-    # Placeholder - will be implemented with actual GPR bindings
-    raise NotImplementedError("GPR bindings not yet implemented")
+    try:
+        from ._core import convert_gpr_to_raw as _convert_gpr_to_raw
+        from ._core import GPRConversionError
+        
+        _convert_gpr_to_raw(input_path, output_path)
+    except GPRConversionError as e:
+        raise ValueError(str(e)) from e
+    except ImportError:
+        raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
+
+
+def convert_dng_to_dng(input_path: str, output_path: str,
+                       parameters: Optional[GPRParameters] = None) -> None:
+    """
+    Convert DNG file to DNG format (reprocess).
+    
+    Args:
+        input_path: Path to input DNG file
+        output_path: Path for output DNG file
+        parameters: Optional conversion parameters (currently unused)
+        
+    Raises:
+        FileNotFoundError: If input file does not exist
+        ValueError: If conversion fails
+    """
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"Input file not found: {input_path}")
+    
+    try:
+        from ._core import convert_dng_to_dng as _convert_dng_to_dng
+        from ._core import GPRConversionError
+        
+        _convert_dng_to_dng(input_path, output_path)
+    except GPRConversionError as e:
+        raise ValueError(str(e)) from e
+    except ImportError:
+        raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
 
 
 def detect_format(filepath: str) -> str:
@@ -142,5 +191,6 @@ __all__ = [
     "convert_gpr_to_dng",
     "convert_dng_to_gpr", 
     "convert_gpr_to_raw",
+    "convert_dng_to_dng",
     "detect_format",
 ]
