@@ -33,8 +33,45 @@ elseif(UNIX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 
-# Find required packages
-find_package(pybind11 REQUIRED CONFIG)
+# Find required packages - try standard approach first
+find_package(pybind11 QUIET CONFIG)
+
+# If standard approach fails, try alternative methods
+if(NOT pybind11_FOUND)
+    # Try to find it via Python
+    execute_process(
+        COMMAND python3 -c "import pybind11; print(pybind11.get_cmake_dir())"
+        OUTPUT_VARIABLE PYBIND11_CMAKE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    
+    if(PYBIND11_CMAKE_DIR)
+        set(pybind11_DIR ${PYBIND11_CMAKE_DIR})
+        find_package(pybind11 QUIET CONFIG)
+    endif()
+endif()
+
+if(NOT pybind11_FOUND)
+    # Try to use pip installed pybind11
+    execute_process(
+        COMMAND python3 -m pybind11 --cmakedir
+        OUTPUT_VARIABLE PYBIND11_CMAKE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    
+    if(PYBIND11_CMAKE_DIR)
+        set(pybind11_DIR ${PYBIND11_CMAKE_DIR})
+        find_package(pybind11 QUIET CONFIG)
+    endif()
+endif()
+
+if(NOT pybind11_FOUND)
+    message(FATAL_ERROR "Could not find pybind11. Please install it with: pip install pybind11")
+endif()
+
+message(STATUS "Found pybind11: ${pybind11_DIR}")
 
 # Add GPR library subdirectory
 # Set GPR build options to minimize dependencies
