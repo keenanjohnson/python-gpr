@@ -366,6 +366,27 @@ PYBIND11_MODULE(_core, m) {
     // Register custom exception
     py::register_exception<GPRConversionError>(m, "GPRConversionError");
     
+    // Bind the gpr_parameters structure
+    py::class_<gpr_parameters>(m, "GPRParametersCore", "Core GPR parameters structure")
+        .def(py::init<>(), "Create default GPR parameters")
+        .def_readwrite("input_width", &gpr_parameters::input_width, "Width of input source in pixels")
+        .def_readwrite("input_height", &gpr_parameters::input_height, "Height of input source in pixels")
+        .def_readwrite("input_pitch", &gpr_parameters::input_pitch, "Pitch of input source in pixels")
+        .def_readwrite("fast_encoding", &gpr_parameters::fast_encoding, "Enable fast encoding mode")
+        .def_readwrite("compute_md5sum", &gpr_parameters::compute_md5sum, "Compute MD5 checksum")
+        .def_readwrite("enable_preview", &gpr_parameters::enable_preview, "Enable preview image");
+    
+    // Helper functions for gpr_parameters
+    m.def("gpr_parameters_set_defaults", [](gpr_parameters& params) {
+        gpr_parameters_set_defaults(&params);
+    }, "Set default values for GPR parameters", py::arg("params"));
+    
+    m.def("gpr_parameters_create_default", []() {
+        gpr_parameters params;
+        gpr_parameters_set_defaults(&params);
+        return params;
+    }, "Create GPR parameters with default values");
+    
     // Basic hello world function for testing
     m.def("hello_world", &hello_world, "A simple hello world function");
     
