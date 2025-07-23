@@ -122,6 +122,15 @@ exclude = [
     "dist/",
 ]
 
+# Ignore specific missing modules that are expected to be missing during development
+[[tool.mypy.overrides]]
+module = "python_gpr._core"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "python_gpr._version"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --strict-markers"
