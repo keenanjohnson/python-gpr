@@ -33,9 +33,10 @@ elseif(UNIX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 
-# Try to find pybind11 in different ways
+# Find required packages - try standard approach first
 find_package(pybind11 QUIET CONFIG)
 
+# If standard approach fails, try alternative methods
 if(NOT pybind11_FOUND)
     # Try to find it via Python
     execute_process(
@@ -67,55 +68,79 @@ if(NOT pybind11_FOUND)
 endif()
 
 if(NOT pybind11_FOUND)
-    # Fallback: try to use pybind11 as a subdirectory if available
-    message(WARNING "Could not find pybind11, trying manual setup")
-    
-    # Get pybind11 includes and setup manually
-    execute_process(
-        COMMAND python3 -c "import pybind11; print(pybind11.get_include())"
-        OUTPUT_VARIABLE PYBIND11_INCLUDE_DIR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-    )
-    
-    if(PYBIND11_INCLUDE_DIR)
-        message(STATUS "Found pybind11 include directory: ${PYBIND11_INCLUDE_DIR}")
-        
-        # Create a minimal pybind11 module setup
-        find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
-        
-        # Create the module target manually
-        add_library(_core MODULE src/python_gpr/_core.cpp)
-        
-        # Set properties for Python module
-        set_target_properties(_core PROPERTIES
-            PREFIX ""
-            SUFFIX ".so"
-        )
-        
-        # Add include directories
-        target_include_directories(_core PRIVATE ${PYBIND11_INCLUDE_DIR} ${Python3_INCLUDE_DIRS})
-        
-        # Link Python libraries
-        target_link_libraries(_core PRIVATE ${Python3_LIBRARIES})
-        
-        # Set compile definitions
-        target_compile_definitions(_core PRIVATE VERSION_INFO="${PROJECT_VERSION}")
-        
-        # Set C++ standard
-        target_compile_features(_core PRIVATE cxx_std_11)
-        
-    else()
-        message(FATAL_ERROR "Could not find pybind11. Please install it with: pip install pybind11")
-    endif()
-else()
-    message(STATUS "Found pybind11: ${pybind11_DIR}")
-    
-    # Create pybind11 module the standard way
-    pybind11_add_module(_core src/python_gpr/_core.cpp)
-    
-    # Set properties for the module
-    target_compile_definitions(_core PRIVATE VERSION_INFO="${PROJECT_VERSION}")
+    message(FATAL_ERROR "Could not find pybind11. Please install it with: pip install pybind11")
+endif()
+
+message(STATUS "Found pybind11: ${pybind11_DIR}")
+
+# Add GPR library subdirectory
+# Set GPR build options to minimize dependencies
+set(GPR_READING 1 CACHE BOOL "Enable GPR reading")
+set(GPR_WRITING 1 CACHE BOOL "Enable GPR writing") 
+set(GPR_JPEG_AVAILABLE 0 CACHE BOOL "Disable JPEG support for minimal build")
+
+# Build GPR library
+add_subdirectory(gpr EXCLUDE_FROM_ALL)
+
+# Get GPR library targets
+# The main libraries we need from GPR
+set(GPR_LIBRARIES
+    gpr_sdk
+    dng_sdk
+    common
+    vc5_common
+    xmp_core
+    expat_lib
+    md5_lib
+)
+
+# Check which optional libraries were actually built
+# Only add them if they exist as targets
+if(TARGET vc5_decoder)
+    list(APPEND GPR_LIBRARIES vc5_decoder)
+endif()
+
+if(TARGET vc5_encoder)
+    list(APPEND GPR_LIBRARIES vc5_encoder)
+endif()
+
+if(TARGET tiny_jpeg)
+    list(APPEND GPR_LIBRARIES tiny_jpeg)
+endif()
+
+# Create pybind11 module
+pybind11_add_module(_core
+    src/python_gpr/_core.cpp
+)
+
+# Set properties for the module
+target_compile_definitions(_core PRIVATE VERSION_INFO="${PROJECT_VERSION}")
+
+# Link against GPR libraries
+target_link_libraries(_core PRIVATE ${GPR_LIBRARIES})
+
+# Include directories for GPR headers
+target_include_directories(_core PRIVATE
+    gpr/source/lib/gpr_sdk
+    gpr/source/lib/dng_sdk
+    gpr/source/lib/common
+    gpr/source/lib/vc5_common
+    gpr/source/lib/xmp_core
+    gpr/source/lib/expat_lib
+    gpr/source/lib/md5_lib
+)
+
+# Add optional include directories only if the targets exist
+if(TARGET vc5_decoder)
+    target_include_directories(_core PRIVATE gpr/source/lib/vc5_decoder)
+endif()
+
+if(TARGET vc5_encoder)
+    target_include_directories(_core PRIVATE gpr/source/lib/vc5_encoder)
+endif()
+
+if(TARGET tiny_jpeg)
+    target_include_directories(_core PRIVATE gpr/source/lib/tiny_jpeg)
 endif()
 
 # Install the module
