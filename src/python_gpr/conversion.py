@@ -60,10 +60,14 @@ def convert_gpr_to_dng(input_path: str, output_path: str,
         from ._core import GPRConversionError
         
         _convert_gpr_to_dng(input_path, output_path)
-    except GPRConversionError as e:
-        raise ValueError(str(e)) from e
     except ImportError:
         raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
+    except Exception as e:
+        # Handle any C++ exceptions that get through
+        if "GPRConversionError" in str(type(e)):
+            raise ValueError(str(e)) from e
+        else:
+            raise ValueError(f"Conversion failed: {str(e)}") from e
 
 
 def convert_dng_to_gpr(input_path: str, output_path: str,
@@ -88,10 +92,14 @@ def convert_dng_to_gpr(input_path: str, output_path: str,
         from ._core import GPRConversionError
         
         _convert_dng_to_gpr(input_path, output_path)
-    except GPRConversionError as e:
-        raise ValueError(str(e)) from e
     except ImportError:
         raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
+    except Exception as e:
+        # Handle any C++ exceptions that get through
+        if "GPRConversionError" in str(type(e)):
+            raise ValueError(str(e)) from e
+        else:
+            raise ValueError(f"Conversion failed: {str(e)}") from e
 
 
 def convert_gpr_to_raw(input_path: str, output_path: str,
@@ -116,10 +124,14 @@ def convert_gpr_to_raw(input_path: str, output_path: str,
         from ._core import GPRConversionError
         
         _convert_gpr_to_raw(input_path, output_path)
-    except GPRConversionError as e:
-        raise ValueError(str(e)) from e
     except ImportError:
         raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
+    except Exception as e:
+        # Handle any C++ exceptions that get through
+        if "GPRConversionError" in str(type(e)):
+            raise ValueError(str(e)) from e
+        else:
+            raise ValueError(f"Conversion failed: {str(e)}") from e
 
 
 def convert_dng_to_dng(input_path: str, output_path: str,
@@ -144,10 +156,14 @@ def convert_dng_to_dng(input_path: str, output_path: str,
         from ._core import GPRConversionError
         
         _convert_dng_to_dng(input_path, output_path)
-    except GPRConversionError as e:
-        raise ValueError(str(e)) from e
     except ImportError:
         raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
+    except Exception as e:
+        # Handle any C++ exceptions that get through
+        if "GPRConversionError" in str(type(e)):
+            raise ValueError(str(e)) from e
+        else:
+            raise ValueError(f"Conversion failed: {str(e)}") from e
 
 
 def detect_format(filepath: str) -> str:
