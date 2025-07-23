@@ -1,49 +1,35 @@
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <string>
-
-// Include GPR headers
-extern "C" {
-    // For now, we'll create a minimal interface
-    // TODO: Include actual GPR headers when ready
-}
 
 namespace py = pybind11;
 
-// Simple wrapper class for GPR functionality
-class GPRCore {
-public:
-    GPRCore() = default;
-    
-    std::string get_version() const {
-        return "GPR Core v1.0 (Python bindings)";
-    }
-    
-    bool is_gpr_file(const std::string& filepath) const {
-        // Placeholder implementation
-        // TODO: Implement using actual GPR library functions
-        return filepath.find(".gpr") != std::string::npos;
-    }
-    
-    std::string get_file_info(const std::string& filepath) const {
-        // Placeholder implementation  
-        // TODO: Implement using actual GPR library functions
-        return "File: " + filepath + " (info not yet implemented)";
-    }
-};
+// Minimal hello world function
+std::string hello_world() {
+    return "Hello World from pybind11!";
+}
+
+// Simple function that adds two numbers
+int add(int a, int b) {
+    return a + b;
+}
+
+// Function to test string manipulation
+std::string greet(const std::string& name) {
+    return "Hello, " + name + "!";
+}
 
 PYBIND11_MODULE(_core, m) {
-    m.doc() = "Python bindings for GPR library core functionality";
+    m.doc() = "Minimal pybind11 hello world binding";
     
-    m.def("get_version", []() {
-        return "GPR Core v1.0 (Python bindings)";
-    }, "Get the version of the GPR library");
+    // Basic hello world function
+    m.def("hello_world", &hello_world, "A simple hello world function");
     
-    py::class_<GPRCore>(m, "GPRCore")
-        .def(py::init<>())
-        .def("get_version", &GPRCore::get_version, "Get GPR core version")
-        .def("is_gpr_file", &GPRCore::is_gpr_file, "Check if file is a GPR file")
-        .def("get_file_info", &GPRCore::get_file_info, "Get information about a GPR file");
+    // Simple math function
+    m.def("add", &add, "Add two integers");
     
+    // String manipulation function
+    m.def("greet", &greet, "Greet someone by name");
+    
+    // Version information
     m.attr("__version__") = py::str(VERSION_INFO);
 }
