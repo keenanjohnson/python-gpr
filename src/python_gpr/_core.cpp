@@ -55,25 +55,86 @@ void validate_input_file(const std::string& filepath) {
     }
 }
 
-// GPR to DNG conversion function (using DNG to DNG as placeholder)
+// GPR to DNG conversion function
 bool convert_gpr_to_dng(const std::string& input_path, const std::string& output_path) {
     validate_input_file(input_path);
     
-    // For now, we'll implement this as a copy operation since GPR->DNG requires VC5 decoder
-    // In a real implementation, this would need the full GPR library with VC5 support
-    throw GPRConversionError("GPR to DNG conversion requires VC5 decoder which is not available in this build. Consider using DNG to DNG conversion instead.");
-}
-
-// DNG to GPR conversion function (using DNG to DNG as placeholder)
-bool convert_dng_to_gpr(const std::string& input_path, const std::string& output_path) {
-    validate_input_file(input_path);
+    // Set up allocator
+    gpr_allocator allocator;
+    allocator.Alloc = gpr_global_malloc;
+    allocator.Free = gpr_global_free;
     
-    // For now, this is not available without VC5 encoder
-    throw GPRConversionError("DNG to GPR conversion requires VC5 encoder which is not available in this build.");
+    // Initialize buffers
+    gpr_buffer input_buffer = {nullptr, 0};
+    gpr_buffer output_buffer = {nullptr, 0};
+    
+    try {
+        // Read input file
+        if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+            throw GPRConversionError("Failed to read input GPR file: " + input_path);
+        }
+        
+        // Set up default parameters
+        gpr_parameters parameters;
+        gpr_parameters_set_defaults(&parameters);
+        
+        // Perform GPR to DNG conversion
+        bool success = gpr_convert_gpr_to_dng(&allocator, &parameters, &input_buffer, &output_buffer);
+        
+        if (!success) {
+            throw GPRConversionError("GPR to DNG conversion failed");
+        }
+        
+        // Write output file
+        if (!write_buffer_to_file(&output_buffer, output_path)) {
+            throw GPRConversionError("Failed to write output DNG file: " + output_path);
+        }
+        
+        // Clean up parameters
+        gpr_parameters_destroy(&parameters, allocator.Free);
+        
+        // Clean up buffers
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        
+        return true;
+        
+    } catch (const GPRConversionError&) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw; // Re-throw GPRConversionError
+    } catch (const std::exception& e) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unexpected error during conversion: " + std::string(e.what()));
+    } catch (...) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unknown error during GPR to DNG conversion");
+    }
 }
 
-// DNG to RAW conversion function (this one should work)
-bool convert_gpr_to_raw(const std::string& input_path, const std::string& output_path) {
+// DNG to GPR conversion function
+bool convert_dng_to_gpr(const std::string& input_path, const std::string& output_path) {
     validate_input_file(input_path);
     
     // Set up allocator
@@ -91,11 +152,89 @@ bool convert_gpr_to_raw(const std::string& input_path, const std::string& output
             throw GPRConversionError("Failed to read input DNG file: " + input_path);
         }
         
-        // Perform DNG to RAW conversion (assuming input is DNG format)
-        bool success = gpr_convert_dng_to_raw(&allocator, &input_buffer, &output_buffer);
+        // Set up default parameters
+        gpr_parameters parameters;
+        gpr_parameters_set_defaults(&parameters);
+        
+        // Perform DNG to GPR conversion
+        bool success = gpr_convert_dng_to_gpr(&allocator, &parameters, &input_buffer, &output_buffer);
         
         if (!success) {
-            throw GPRConversionError("DNG to RAW conversion failed");
+            throw GPRConversionError("DNG to GPR conversion failed");
+        }
+        
+        // Write output file
+        if (!write_buffer_to_file(&output_buffer, output_path)) {
+            throw GPRConversionError("Failed to write output GPR file: " + output_path);
+        }
+        
+        // Clean up parameters
+        gpr_parameters_destroy(&parameters, allocator.Free);
+        
+        // Clean up buffers
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        
+        return true;
+        
+    } catch (const GPRConversionError&) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw; // Re-throw GPRConversionError
+    } catch (const std::exception& e) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unexpected error during conversion: " + std::string(e.what()));
+    } catch (...) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unknown error during DNG to GPR conversion");
+    }
+}
+
+// GPR to RAW conversion function
+bool convert_gpr_to_raw(const std::string& input_path, const std::string& output_path) {
+    validate_input_file(input_path);
+    
+    // Set up allocator
+    gpr_allocator allocator;
+    allocator.Alloc = gpr_global_malloc;
+    allocator.Free = gpr_global_free;
+    
+    // Initialize buffers
+    gpr_buffer input_buffer = {nullptr, 0};
+    gpr_buffer output_buffer = {nullptr, 0};
+    
+    try {
+        // Read input file
+        if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+            throw GPRConversionError("Failed to read input GPR file: " + input_path);
+        }
+        
+        // Perform GPR to RAW conversion
+        bool success = gpr_convert_gpr_to_raw(&allocator, &input_buffer, &output_buffer);
+        
+        if (!success) {
+            throw GPRConversionError("GPR to RAW conversion failed");
         }
         
         // Write output file
@@ -139,7 +278,7 @@ bool convert_gpr_to_raw(const std::string& input_path, const std::string& output
         if (output_buffer.buffer) {
             allocator.Free(output_buffer.buffer);
         }
-        throw GPRConversionError("Unknown error during DNG to RAW conversion");
+        throw GPRConversionError("Unknown error during GPR to RAW conversion");
     }
 }
 
@@ -246,7 +385,7 @@ PYBIND11_MODULE(_core, m) {
           py::arg("input_path"), py::arg("output_path"));
     
     m.def("convert_gpr_to_raw", &convert_gpr_to_raw,
-          "Convert GPR file to RAW format (accepts DNG input)",
+          "Convert GPR file to RAW format",
           py::arg("input_path"), py::arg("output_path"));
     
     // Additional conversion function that works with current build
