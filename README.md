@@ -20,3 +20,18 @@ git submodule update --init --recursive
 ```
 
 The GPR library will be available in the `gpr/` subdirectory after running the submodule update command.
+
+## Testing
+
+Run the unit tests to verify the setup:
+
+```bash
+# Run all tests
+python -m unittest discover tests/ -v
+
+# Run specific test modules
+python -m unittest tests.test_core_basic -v
+python -m unittest tests.test_metadata_basic -v
+```
+
+The test suite includes 31 tests covering core functionality, error handling, and project structure validation. No external dependencies are required for the basic tests.
