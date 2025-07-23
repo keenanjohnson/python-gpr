@@ -103,8 +103,34 @@ bool convert_gpr_to_raw(const std::string& input_path, const std::string& output
             throw GPRConversionError("Failed to write output RAW file: " + output_path);
         }
         
+        // Clean up buffers
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        
         return true;
         
+    } catch (const GPRConversionError&) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw; // Re-throw GPRConversionError
+    } catch (const std::exception& e) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unexpected error during conversion: " + std::string(e.what()));
     } catch (...) {
         // Clean up buffers on error
         if (input_buffer.buffer) {
@@ -113,18 +139,8 @@ bool convert_gpr_to_raw(const std::string& input_path, const std::string& output
         if (output_buffer.buffer) {
             allocator.Free(output_buffer.buffer);
         }
-        throw;
+        throw GPRConversionError("Unknown error during DNG to RAW conversion");
     }
-    
-    // Clean up buffers
-    if (input_buffer.buffer) {
-        allocator.Free(input_buffer.buffer);
-    }
-    if (output_buffer.buffer) {
-        allocator.Free(output_buffer.buffer);
-    }
-    
-    return true;
 }
 
 // Add a working DNG to DNG function to demonstrate the binding works
@@ -165,8 +181,34 @@ bool convert_dng_to_dng(const std::string& input_path, const std::string& output
         // Clean up parameters
         gpr_parameters_destroy(&parameters, allocator.Free);
         
+        // Clean up buffers
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        
         return true;
         
+    } catch (const GPRConversionError&) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw; // Re-throw GPRConversionError
+    } catch (const std::exception& e) {
+        // Clean up buffers on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Unexpected error during conversion: " + std::string(e.what()));
     } catch (...) {
         // Clean up buffers on error
         if (input_buffer.buffer) {
@@ -175,18 +217,8 @@ bool convert_dng_to_dng(const std::string& input_path, const std::string& output
         if (output_buffer.buffer) {
             allocator.Free(output_buffer.buffer);
         }
-        throw;
+        throw GPRConversionError("Unknown error during DNG to DNG conversion");
     }
-    
-    // Clean up buffers
-    if (input_buffer.buffer) {
-        allocator.Free(input_buffer.buffer);
-    }
-    if (output_buffer.buffer) {
-        allocator.Free(output_buffer.buffer);
-    }
-    
-    return true;
 }
 
 PYBIND11_MODULE(_core, m) {
