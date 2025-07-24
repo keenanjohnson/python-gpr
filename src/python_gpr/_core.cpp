@@ -632,7 +632,7 @@ py::array get_raw_image_data(const std::string& input_path, const std::string& d
                         {info.height, info.width},  // shape
                         {info.width * sizeof(uint16_t), sizeof(uint16_t)},  // strides
                         reinterpret_cast<uint16_t*>(output_buffer.buffer),  // data pointer
-                        py::cast(py::none())  // parent - we'll handle memory management
+                        py::cast<py::object>(py::none())  // parent - we'll handle memory management
                     );
                 } catch (const std::exception& e) {
                     throw GPRMemoryError("Failed to create uint16 NumPy array: " + std::string(e.what()));
@@ -641,7 +641,7 @@ py::array get_raw_image_data(const std::string& input_path, const std::string& d
                 // Convert uint16 data to float32 and normalize
                 try {
                     auto float_array = py::array_t<float>(info.height * info.width);
-                    float* float_data = static_cast<float*>(float_array.mutable_ptr());
+                    float* float_data = static_cast<float*>(float_array.mutable_data());
                     uint16_t* raw_data = reinterpret_cast<uint16_t*>(output_buffer.buffer);
                     
                     if (float_data == nullptr || raw_data == nullptr) {
