@@ -14,12 +14,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
-        numpy-version: ["1.20.*", "1.24.*", "2.0.*", "latest"]
+        numpy-version: ["~=1.20.0", "~=1.24.0", "~=2.0.0", "latest"]
         exclude:
           # NumPy 2.0+ requires Python 3.9+, and some combinations may not be available
           - python-version: "3.9"
-            numpy-version: "2.0.*"
+            numpy-version: "~=2.0.0"
             os: "windows-latest"  # Exclude problematic combinations
+          # NumPy 1.20.* has issues with Python 3.12
+          - python-version: "3.12"
+            numpy-version: "~=1.20.0"
         include:
           # Add specific combinations for thorough testing
           - os: ubuntu-latest
@@ -51,30 +54,31 @@ jobs:
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' --yes
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' --yes --no-progress
       timeout-minutes: 10
+      shell: bash
 
     - name: Install Python dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install build wheel
+        python -m pip install --upgrade pip --timeout 300
+        pip install build wheel --timeout 300
       shell: bash
 
     - name: Install NumPy (latest)
       if: matrix.numpy-version == 'latest'
       run: |
-        pip install numpy
+        pip install numpy --timeout 300
       shell: bash
 
     - name: Install NumPy (specific version)
       if: matrix.numpy-version != 'latest'
       run: |
-        pip install "numpy==${{ matrix.numpy-version }}"
+        pip install "numpy${{ matrix.numpy-version }}" --timeout 300
       shell: bash
 
     - name: Run basic unit tests
       run: |
-        export PYTHONPATH="${PYTHONPATH}:src"
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
         python -m unittest tests.test_core_basic -v
       shell: bash
 
@@ -86,7 +90,7 @@ jobs:
         python -c "import platform; print(f'Platform: {platform.system()} {platform.release()}')"
         python -c "import sys; print(f'Python version: {sys.version}')"
         python -c "import numpy; print(f'NumPy version: {numpy.__version__}')" || echo "NumPy not available"
-        export PYTHONPATH="${PYTHONPATH}:src"
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
         python -c "import python_gpr; print(f'python_gpr version: {python_gpr.__version__}')" || echo "python_gpr import failed"
       shell: bash
 
@@ -94,25 +98,25 @@ jobs:
       continue-on-error: true
       run: |
         # Try to install in development mode, fallback to just dev dependencies
-        pip install -e .[dev] || pip install pytest pytest-cov black flake8 mypy
+        pip install -e .[dev] --timeout 300 || pip install pytest pytest-cov black flake8 mypy --timeout 300
       shell: bash
 
     - name: Run pytest tests if available
       continue-on-error: true
       run: |
-        export PYTHONPATH="${PYTHONPATH}:src"
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
         python -m pytest tests/ -v --tb=short
       shell: bash
 
     - name: Run unittest discovery
       run: |
-        export PYTHONPATH="${PYTHONPATH}:src"
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
         python -m unittest discover tests/ -v
       shell: bash
 
     - name: Run platform-specific tests
       run: |
-        export PYTHONPATH="${PYTHONPATH}:src"
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
         python -m unittest tests.test_platform_compatibility -v
       shell: bash
 
@@ -120,7 +124,7 @@ jobs:
       if: matrix.test-type == 'comprehensive'
       run: |
         echo "Running comprehensive test suite..."
-        export PYTHONPATH="${PYTHONPATH}:src"
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
         python -m unittest tests.test_numpy_integration -v
         python -m unittest tests.test_requirements_validation -v
       shell: bash
@@ -176,13 +180,14 @@ jobs:
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' --yes
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' --yes --no-progress
       timeout-minutes: 10
+      shell: bash
 
     - name: Install build dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install build wheel
+        python -m pip install --upgrade pip --timeout 300
+        pip install build wheel --timeout 300
       shell: bash
 
     - name: Build package
