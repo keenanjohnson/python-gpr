@@ -141,3 +141,33 @@ python_files = [
     "test_*.py",
     "*_test.py",
 ]
+
+[tool.cibuildwheel]
+# Build wheels for Python 3.9-3.12 on multiple platforms
+build = "cp39-* cp310-* cp311-* cp312-*"
+skip = "*-musllinux*"  # Skip musl Linux for now due to potential compatibility issues
+
+# Environment variables for all platforms
+environment = { CMAKE_BUILD_TYPE = "Release" }
+
+# Test command to ensure wheels work
+test-command = "python -c 'import python_gpr; print(\"Wheel test passed!\")'"
+test-requires = ["numpy"]
+
+# Platform-specific settings
+[tool.cibuildwheel.linux]
+before-all = [
+    "yum install -y cmake3 gcc-c++ || apt-get update && apt-get install -y cmake build-essential",
+]
+environment = { CMAKE_BUILD_TYPE = "Release", CMAKE_POSITION_INDEPENDENT_CODE = "ON" }
+
+[tool.cibuildwheel.macos]
+before-all = [
+    "brew install cmake || true",  # Don't fail if already installed
+]
+environment = { CMAKE_BUILD_TYPE = "Release", CMAKE_OSX_DEPLOYMENT_TARGET = "10.9" }
+
+[tool.cibuildwheel.windows]
+before-all = [
+    "choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' || echo 'cmake might already be installed'",
+]
