@@ -21,9 +21,29 @@ git submodule update --init --recursive
 
 The GPR library will be available in the `gpr/` subdirectory after running the submodule update command.
 
+## Compatibility
+
+Python-GPR is extensively tested across multiple platforms and versions:
+
+### Supported Platforms
+- **Linux** (Ubuntu 20.04+) - Primary development platform
+- **macOS** (11.0+) - Intel and Apple Silicon
+- **Windows** (10+) - x64 architecture
+
+### Python Versions
+- Python 3.9 through 3.12 (actively tested)
+- Python 3.13+ (may work, not yet tested)
+
+### NumPy Compatibility
+- NumPy 1.20.x through 2.1.x
+- Comprehensive compatibility testing across versions
+- Full support for NumPy 2.0+ with handling for breaking changes
+
+For detailed compatibility information, including known issues and platform-specific considerations, see [COMPATIBILITY_MATRIX.md](COMPATIBILITY_MATRIX.md).
+
 ## Testing
 
-Run the unit tests to verify the setup:
+The project includes comprehensive cross-platform testing:
 
 ```bash
 # Run all tests
@@ -33,9 +53,17 @@ python -m unittest discover tests/ -v
 python -m unittest tests.test_core_basic -v
 python -m unittest tests.test_metadata_basic -v
 python -m unittest tests.test_numpy_integration -v
+python -m unittest tests.test_platform_compatibility -v
 ```
 
-The test suite includes comprehensive tests covering core functionality, error handling, NumPy integration, and project structure validation. No external dependencies are required for the basic tests.
+The test suite includes:
+- Core functionality tests (153+ tests)
+- Platform-specific compatibility tests
+- NumPy version compatibility validation
+- Memory management verification
+- Error handling across platforms
+
+No external dependencies are required for the basic tests.
 
 ## NumPy Integration
 
