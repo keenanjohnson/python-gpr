@@ -42,6 +42,15 @@ except ImportError as e:
     warnings.warn(f"Some modules could not be imported: {e}", ImportWarning)
     _bindings_available = False
 
+# Import memory profiling utilities (always available)
+try:
+    from .memory_profiler import *
+    _memory_profiling_available = True
+except ImportError as e:
+    import warnings
+    warnings.warn(f"Memory profiling utilities could not be imported: {e}", ImportWarning)
+    _memory_profiling_available = False
+
 # Make exception classes available at package level
 if _exceptions_available:
     # Re-export exception classes at package level for easy access
@@ -76,3 +85,17 @@ else:
         "__email__",
         "__description__",
     ]
+
+# Add memory profiling utilities to exports if available
+if _memory_profiling_available:
+    __all__.extend([
+        # Memory profiling classes and functions
+        "MemoryProfiler",
+        "memory_profile",
+        "measure_memory_usage", 
+        "run_memory_stress_test",
+        "start_global_profiling",
+        "stop_global_profiling",
+        "get_global_memory_report",
+        "check_global_memory_leaks",
+    ])
