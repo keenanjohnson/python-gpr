@@ -145,25 +145,38 @@ class TestNumPyIntegrationAPI(unittest.TestCase):
     def test_supported_dtypes(self):
         """Test that the API documents supported dtypes correctly."""
         # This is mainly a documentation test to ensure we handle expected dtypes
-        gpr_img = GPRImage("/dummy/path.gpr")
+        # Create a temporary dummy file for testing
+        import tempfile
+        import os
         
-        # Test that these dtypes are documented as supported
-        supported_dtypes = ["uint16", "float32"]
+        with tempfile.NamedTemporaryFile(suffix='.gpr', delete=False) as tmp_file:
+            tmp_file.write(b"dummy gpr content")
+            temp_path = tmp_file.name
         
-        for dtype in supported_dtypes:
-            # Since bindings aren't available, we expect NotImplementedError,
-            # but we want to make sure the API accepts these dtype parameters
-            try:
-                gpr_img.to_numpy(dtype=dtype)
-            except NotImplementedError:
-                # This is expected when bindings aren't available
-                pass
-            except FileNotFoundError:
-                # This is also expected for dummy path
-                pass
-            except TypeError:
-                # This would indicate the API doesn't accept the dtype parameter
-                self.fail(f"API should accept dtype '{dtype}'")
+        try:
+            gpr_img = GPRImage(temp_path)
+            
+            # Test that these dtypes are documented as supported
+            supported_dtypes = ["uint16", "float32"]
+            
+            for dtype in supported_dtypes:
+                # Since bindings aren't available, we expect NotImplementedError,
+                # but we want to make sure the API accepts these dtype parameters
+                try:
+                    gpr_img.to_numpy(dtype=dtype)
+                except NotImplementedError:
+                    # This is expected when bindings aren't available
+                    pass
+                except FileNotFoundError:
+                    # This is also expected for dummy path
+                    pass
+                except TypeError:
+                    # This would indicate the API doesn't accept the dtype parameter
+                    self.fail(f"API should accept dtype '{dtype}'")
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
                 
     def test_return_type_annotations(self):
         """Test that functions have proper return type annotations."""

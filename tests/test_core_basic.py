@@ -132,7 +132,7 @@ class TestGPRInfo(unittest.TestCase):
         with self.assertRaises(FileNotFoundError) as context:
             get_gpr_info(non_existent_path)
             
-        self.assertIn("GPR file not found", str(context.exception))
+        self.assertIn("File not found", str(context.exception))
 
 
 class TestGPRMetadata(unittest.TestCase):
