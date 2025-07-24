@@ -76,6 +76,9 @@ Issues = "https://github.com/keenanjohnson/python-gpr/issues"
 minimum-version = "0.4"
 build-dir = "build/{wheel_tag}"
 install.components = ["Development"]
+# Include git submodules in source distribution
+sdist.include = ["gpr/**"]
+sdist.exclude = ["gpr/.git/**"]
 
 [tool.scikit-build.cmake.define]
 CMAKE_BUILD_TYPE = "Release"

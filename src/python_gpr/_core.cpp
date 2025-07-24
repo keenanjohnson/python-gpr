@@ -603,7 +603,7 @@ py::array get_raw_image_data(const std::string& input_path, const std::string& d
             parameters_initialized = true;
             
             // Convert to raw format to get pixel data
-            bool success = gpr_convert_gpr_to_raw(&allocator, &parameters, &input_buffer, &output_buffer);
+            bool success = gpr_convert_gpr_to_raw(&allocator, &input_buffer, &output_buffer);
             
             if (!success) {
                 std::string context = get_error_context("GPR to raw conversion for data extraction", input_path);
