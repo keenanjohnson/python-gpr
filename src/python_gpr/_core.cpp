@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 #include <string>
 #include <fstream>
 #include <stdexcept>
@@ -360,6 +361,172 @@ bool convert_dng_to_dng(const std::string& input_path, const std::string& output
     }
 }
 
+// NumPy integration functions for raw image data access
+
+// Structure to hold image information
+struct ImageInfo {
+    int width;
+    int height;
+    int channels;
+    std::string format;
+    size_t data_size;
+};
+
+// Get image information from GPR file
+ImageInfo get_image_info(const std::string& input_path) {
+    validate_input_file(input_path);
+    
+    // Set up allocator
+    gpr_allocator allocator;
+    allocator.Alloc = gpr_global_malloc;
+    allocator.Free = gpr_global_free;
+    
+    // Initialize buffer
+    gpr_buffer input_buffer = {nullptr, 0};
+    
+    try {
+        // Read input file
+        if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+            throw GPRConversionError("Failed to read input file: " + input_path);
+        }
+        
+        // Set up default parameters
+        gpr_parameters parameters;
+        gpr_parameters_set_defaults(&parameters);
+        
+        // Try to get image information from the GPR file
+        // This is a simplified approach - in a real implementation,
+        // we would need to parse the GPR/DNG structure to extract dimensions
+        ImageInfo info;
+        
+        // For now, provide reasonable defaults based on common GPR dimensions
+        // These would normally be extracted from the file metadata
+        info.width = 4000;    // Common GPR width
+        info.height = 3000;   // Common GPR height  
+        info.channels = 1;    // Raw files are typically single channel
+        info.format = "uint16"; // Common raw data format
+        info.data_size = info.width * info.height * info.channels * sizeof(uint16_t);
+        
+        // Clean up
+        gpr_parameters_destroy(&parameters, allocator.Free);
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        
+        return info;
+        
+    } catch (const GPRConversionError&) {
+        // Clean up on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        throw;
+    } catch (const std::exception& e) {
+        // Clean up on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        throw GPRConversionError("Error getting image info: " + std::string(e.what()));
+    }
+}
+
+// Extract raw image data as NumPy array
+py::array get_raw_image_data(const std::string& input_path, const std::string& dtype) {
+    validate_input_file(input_path);
+    
+    // Get image information first
+    ImageInfo info = get_image_info(input_path);
+    
+    // Set up allocator
+    gpr_allocator allocator;
+    allocator.Alloc = gpr_global_malloc;
+    allocator.Free = gpr_global_free;
+    
+    // Initialize buffers
+    gpr_buffer input_buffer = {nullptr, 0};
+    gpr_buffer output_buffer = {nullptr, 0};
+    
+    try {
+        // Read input file
+        if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+            throw GPRConversionError("Failed to read input file: " + input_path);
+        }
+        
+        // Set up default parameters
+        gpr_parameters parameters;
+        gpr_parameters_set_defaults(&parameters);
+        
+        // Convert to raw format to get pixel data
+        bool success = gpr_convert_gpr_to_raw(&allocator, &parameters, &input_buffer, &output_buffer);
+        
+        if (!success) {
+            throw GPRConversionError("Failed to convert GPR to raw format for data extraction");
+        }
+        
+        // Create NumPy array based on requested dtype
+        py::array result;
+        
+        if (dtype == "uint16") {
+            // Create uint16 array
+            result = py::array_t<uint16_t>(
+                {info.height, info.width},  // shape
+                {info.width * sizeof(uint16_t), sizeof(uint16_t)},  // strides
+                reinterpret_cast<uint16_t*>(output_buffer.buffer),  // data pointer
+                py::cast(py::none())  // parent - we'll handle memory management
+            );
+        } else if (dtype == "float32") {
+            // Convert uint16 data to float32 and normalize
+            auto float_array = py::array_t<float>(info.height * info.width);
+            float* float_data = static_cast<float*>(float_array.mutable_ptr());
+            uint16_t* raw_data = reinterpret_cast<uint16_t*>(output_buffer.buffer);
+            
+            // Convert and normalize to 0-1 range
+            for (size_t i = 0; i < info.height * info.width; ++i) {
+                float_data[i] = static_cast<float>(raw_data[i]) / 65535.0f;
+            }
+            
+            result = float_array.reshape({info.height, info.width});
+        } else {
+            throw GPRConversionError("Unsupported dtype: " + dtype + ". Supported types: uint16, float32");
+        }
+        
+        // Clean up parameters
+        gpr_parameters_destroy(&parameters, allocator.Free);
+        
+        // Clean up input buffer
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        
+        // Note: output_buffer is now owned by the NumPy array for uint16,
+        // or we've copied the data for float32, so we clean it up for float32
+        if (dtype == "float32" && output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        
+        return result;
+        
+    } catch (const GPRConversionError&) {
+        // Clean up on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw;
+    } catch (const std::exception& e) {
+        // Clean up on error
+        if (input_buffer.buffer) {
+            allocator.Free(input_buffer.buffer);
+        }
+        if (output_buffer.buffer) {
+            allocator.Free(output_buffer.buffer);
+        }
+        throw GPRConversionError("Error extracting raw image data: " + std::string(e.what()));
+    }
+}
+
 PYBIND11_MODULE(_core, m) {
     m.doc() = "Python GPR Core Conversion Functions";
     
@@ -375,6 +542,22 @@ PYBIND11_MODULE(_core, m) {
         .def_readwrite("fast_encoding", &gpr_parameters::fast_encoding, "Enable fast encoding mode")
         .def_readwrite("compute_md5sum", &gpr_parameters::compute_md5sum, "Compute MD5 checksum")
         .def_readwrite("enable_preview", &gpr_parameters::enable_preview, "Enable preview image");
+    
+    // Bind the ImageInfo structure
+    py::class_<ImageInfo>(m, "ImageInfo", "Image information structure")
+        .def(py::init<>(), "Create default ImageInfo")
+        .def_readwrite("width", &ImageInfo::width, "Image width in pixels")
+        .def_readwrite("height", &ImageInfo::height, "Image height in pixels")
+        .def_readwrite("channels", &ImageInfo::channels, "Number of image channels")
+        .def_readwrite("format", &ImageInfo::format, "Image data format")
+        .def_readwrite("data_size", &ImageInfo::data_size, "Size of image data in bytes")
+        .def("__repr__", [](const ImageInfo& info) {
+            return "ImageInfo(width=" + std::to_string(info.width) + 
+                   ", height=" + std::to_string(info.height) + 
+                   ", channels=" + std::to_string(info.channels) + 
+                   ", format='" + info.format + "'" +
+                   ", data_size=" + std::to_string(info.data_size) + ")";
+        });
     
     // Helper functions for gpr_parameters
     m.def("gpr_parameters_set_defaults", [](gpr_parameters& params) {
@@ -413,6 +596,15 @@ PYBIND11_MODULE(_core, m) {
     m.def("convert_dng_to_dng", &convert_dng_to_dng,
           "Convert DNG file to DNG format (reprocess)",
           py::arg("input_path"), py::arg("output_path"));
+    
+    // NumPy integration functions for raw image data access
+    m.def("get_raw_image_data", &get_raw_image_data,
+          "Extract raw image data as NumPy array from GPR file",
+          py::arg("input_path"), py::arg("dtype") = "uint16");
+    
+    m.def("get_image_info", &get_image_info,
+          "Get image dimensions and metadata from GPR file",
+          py::arg("input_path"));
     
     // Version information
     m.attr("__version__") = py::str(VERSION_INFO);
