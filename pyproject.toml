@@ -151,7 +151,7 @@ skip = "*-musllinux*"  # Skip musl Linux for now due to potential compatibility 
 environment = { CMAKE_BUILD_TYPE = "Release" }
 
 # Test command to ensure wheels work
-test-command = "python -c 'import python_gpr; print(\"Wheel test passed!\")'"
+test-command = "python -c 'import python_gpr; print(\"Wheel import test passed - version:\", getattr(python_gpr, \"__version__\", \"unknown\"))'"
 test-requires = ["numpy"]
 
 # Platform-specific settings

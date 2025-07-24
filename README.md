@@ -6,7 +6,17 @@ https://github.com/gopro/gpr
 
 This is also somewhat my first experiement using the github copilot agent mode, so use with a bit of caution.
 
-## Setup
+## Installation
+
+### From PyPI (Recommended)
+
+Binary wheels are automatically built for Windows, macOS, and Linux:
+
+```bash
+pip install python-gpr
+```
+
+### From Source
 
 This project uses the upstream GPR library as a git submodule. To clone and set up the repository:
 
