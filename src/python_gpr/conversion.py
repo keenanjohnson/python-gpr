@@ -234,6 +234,9 @@ def convert_gpr_to_dng(input_path: str, output_path: str,
         _convert_gpr_to_dng(input_path, output_path)
     except ImportError:
         raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
+    except NotImplementedError:
+        # Re-raise NotImplementedError as-is
+        raise
     except Exception as e:
         # Handle any C++ exceptions that get through
         if "GPRConversionError" in str(type(e)):
@@ -266,6 +269,9 @@ def convert_dng_to_gpr(input_path: str, output_path: str,
         _convert_dng_to_gpr(input_path, output_path)
     except ImportError:
         raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
+    except NotImplementedError:
+        # Re-raise NotImplementedError as-is
+        raise
     except Exception as e:
         # Handle any C++ exceptions that get through
         if "GPRConversionError" in str(type(e)):
@@ -298,6 +304,9 @@ def convert_gpr_to_raw(input_path: str, output_path: str,
         _convert_gpr_to_raw(input_path, output_path)
     except ImportError:
         raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
+    except NotImplementedError:
+        # Re-raise NotImplementedError as-is
+        raise
     except Exception as e:
         # Handle any C++ exceptions that get through
         if "GPRConversionError" in str(type(e)):
@@ -330,6 +339,9 @@ def convert_dng_to_dng(input_path: str, output_path: str,
         _convert_dng_to_dng(input_path, output_path)
     except ImportError:
         raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
+    except NotImplementedError:
+        # Re-raise NotImplementedError as-is
+        raise
     except Exception as e:
         # Handle any C++ exceptions that get through
         if "GPRConversionError" in str(type(e)):

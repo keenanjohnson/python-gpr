@@ -451,7 +451,14 @@ class TestMetadataPersistence(unittest.TestCase):
                 {"camera_make": original_make},
                 {"camera_make": modified_make}
             ]
-            mock_modify.return_value = True
+            
+            # Mock modify_metadata to actually create the output file
+            def mock_modify_func(input_path, output_path, metadata_updates):
+                # Create the output file so extract_exif doesn't fail
+                Path(output_path).touch()
+                return True
+            
+            mock_modify.side_effect = mock_modify_func
             
             # Read original metadata
             original_metadata = extract_exif(str(self.input_file))

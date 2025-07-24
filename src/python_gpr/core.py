@@ -216,6 +216,9 @@ class GPRImage:
             }
         except ImportError:
             raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
+        except NotImplementedError:
+            # Re-raise NotImplementedError as-is
+            raise
         except Exception as e:
             raise ValueError(f"Failed to get image information: {str(e)}") from e
     
