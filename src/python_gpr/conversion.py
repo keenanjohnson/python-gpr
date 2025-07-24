@@ -230,13 +230,19 @@ def convert_gpr_to_dng(input_path: str, output_path: str,
     try:
         from ._core import convert_gpr_to_dng as _convert_gpr_to_dng
         from ._core import GPRConversionError
-        
+
         _convert_gpr_to_dng(input_path, output_path)
     except ImportError:
         raise NotImplementedError("GPR C++ bindings not available - please build the extension module")
     except NotImplementedError:
         # Re-raise NotImplementedError as-is
         raise
+    except RuntimeError as e:
+        # Convert RuntimeError from compiled module about unavailable functionality to NotImplementedError
+        if "not available" in str(e) or "disabled in build" in str(e):
+            raise NotImplementedError(str(e))
+        else:
+            raise ValueError(f"Runtime error during conversion: {str(e)}") from e
     except Exception as e:
         # Handle any C++ exceptions that get through
         if "GPRConversionError" in str(type(e)):
@@ -272,6 +278,12 @@ def convert_dng_to_gpr(input_path: str, output_path: str,
     except NotImplementedError:
         # Re-raise NotImplementedError as-is
         raise
+    except RuntimeError as e:
+        # Convert RuntimeError from compiled module about unavailable functionality to NotImplementedError
+        if "not available" in str(e) or "disabled in build" in str(e):
+            raise NotImplementedError(str(e))
+        else:
+            raise ValueError(f"Runtime error during conversion: {str(e)}") from e
     except Exception as e:
         # Handle any C++ exceptions that get through
         if "GPRConversionError" in str(type(e)):
@@ -307,6 +319,12 @@ def convert_gpr_to_raw(input_path: str, output_path: str,
     except NotImplementedError:
         # Re-raise NotImplementedError as-is
         raise
+    except RuntimeError as e:
+        # Convert RuntimeError from compiled module about unavailable functionality to NotImplementedError
+        if "not available" in str(e) or "disabled in build" in str(e):
+            raise NotImplementedError(str(e))
+        else:
+            raise ValueError(f"Runtime error during conversion: {str(e)}") from e
     except Exception as e:
         # Handle any C++ exceptions that get through
         if "GPRConversionError" in str(type(e)):

@@ -42,6 +42,9 @@ class GPRMetadata:
             self._exif_metadata = _core.extract_exif_metadata(self.filepath)
             self._gpr_metadata = _core.extract_gpr_metadata(self.filepath)
         except Exception as e:
+            # Handle parsing errors for invalid files
+            if "Failed to parse metadata" in str(e) or "not be a valid GPR/DNG" in str(e):
+                raise ValueError(f"Invalid file format or corrupted file: {self.filepath}")
             raise ValueError(f"Failed to load metadata from {self.filepath}: {e}")
         
     @property
@@ -234,6 +237,9 @@ def extract_exif(filepath: str) -> Dict[str, Any]:
     try:
         return _core.extract_exif_metadata(filepath)
     except Exception as e:
+        # Handle parsing errors for invalid files
+        if "Failed to parse metadata" in str(e) or "not be a valid GPR/DNG" in str(e):
+            raise ValueError(f"Invalid file format or corrupted file: {filepath}")
         raise ValueError(f"Failed to extract EXIF data from {filepath}: {e}")
 
 
@@ -258,6 +264,9 @@ def extract_gpr_info(filepath: str) -> Dict[str, Any]:
     try:
         return _core.extract_gpr_metadata(filepath)
     except Exception as e:
+        # Handle parsing errors for invalid files
+        if "Failed to parse metadata" in str(e) or "not be a valid GPR/DNG" in str(e):
+            raise ValueError(f"Invalid file format or corrupted file: {filepath}")
         raise ValueError(f"Failed to extract GPR information from {filepath}: {e}")
 
 
