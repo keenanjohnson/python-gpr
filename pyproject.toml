@@ -55,6 +55,8 @@ dev = [
     "flake8>=6.0",
     "mypy>=1.0",
     "pre-commit>=3.0",
+    "memory-profiler>=0.60.0",
+    "psutil>=5.8.0",
 ]
 docs = [
     "sphinx>=5.0",
@@ -143,6 +145,11 @@ testpaths = [
 python_files = [
     "test_*.py",
     "*_test.py",
+]
+markers = [
+    "memory: marks tests as memory leak detection tests",
+    "slow: marks tests as slow running",
+    "long_running: marks tests that run for extended periods",
 ]
 
 [tool.cibuildwheel]

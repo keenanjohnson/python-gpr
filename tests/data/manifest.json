@@ -1,0 +1,280 @@
+{
+  "version": "1.0.0",
+  "description": "Test data manifest for python-gpr test suite",
+  "generated": "2025-07-24T07:28:27.061643Z",
+  "files": {
+    "2024_10_08_10-37-22.GPR": {
+      "type": "gpr",
+      "size": 15907462,
+      "description": "Real GPR file sample for testing conversion functions",
+      "source": "production",
+      "width": null,
+      "height": null,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "7e3749102d2b4df8d0e8390c05c0d3fa30163676881db13a08c71c6f5ae804f0"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "real_data_validation"
+      ]
+    },
+    "tiny_64x48.gpr": {
+      "type": "synthetic_gpr",
+      "size": 3092,
+      "description": "Tiny GPR file for minimal testing",
+      "source": "synthetic",
+      "width": 64,
+      "height": 48,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "8c2e349084bae43377f28c06f4d7b8fef29dc9c52caffb09d4cbc5d1f27f8dc3"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "unit_testing",
+        "performance_testing"
+      ]
+    },
+    "small_320x240.gpr": {
+      "type": "synthetic_gpr",
+      "size": 76820,
+      "description": "Small GPR file for basic testing",
+      "source": "synthetic",
+      "width": 320,
+      "height": 240,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "78ea8bd8240ea7b848732ba9b0c6f9e438948ea8525caa571a6d067f9d3f3bb6"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "unit_testing",
+        "performance_testing"
+      ]
+    },
+    "medium_640x480.gpr": {
+      "type": "synthetic_gpr",
+      "size": 307220,
+      "description": "Medium GPR file for standard testing",
+      "source": "synthetic",
+      "width": 640,
+      "height": 480,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "55c82f52345d15552c3491c96925ae944f48d4703a0dd378fdaa4906368d37dc"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "integration_testing"
+      ]
+    },
+    "hd_1280x720.gpr": {
+      "type": "synthetic_gpr",
+      "size": 921620,
+      "description": "HD resolution GPR file",
+      "source": "synthetic",
+      "width": 1280,
+      "height": 720,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "263d0a945271ebba948276661b1074e00269dc71932c0a92adee264ec27bc5d0"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "integration_testing"
+      ]
+    },
+    "fullhd_1920x1080.gpr": {
+      "type": "synthetic_gpr",
+      "size": 2073620,
+      "description": "Full HD GPR file",
+      "source": "synthetic",
+      "width": 1920,
+      "height": 1080,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "d4ce9b6b7d5f2db1fd40ec446473ed5c4ca589296bbd571eb1066009ad454140"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "integration_testing"
+      ]
+    },
+    "4k_3840x2160.gpr": {
+      "type": "synthetic_gpr",
+      "size": 8294420,
+      "description": "4K resolution GPR file",
+      "source": "synthetic",
+      "width": 3840,
+      "height": 2160,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "0b0d386c035be8af33e6d7eb5a8c297e77fd3f774762d2c35d67d120496e0d2a"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "stress_testing",
+        "memory_testing"
+      ]
+    },
+    "wide_2560x720.gpr": {
+      "type": "synthetic_gpr",
+      "size": 1843220,
+      "description": "Ultra-wide aspect ratio GPR file",
+      "source": "synthetic",
+      "width": 2560,
+      "height": 720,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "289347b74bf526aaa063feb4d4419dc6914cfc8b51a0af73aac5c0d1e9fc181f"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "aspect_ratio_testing"
+      ]
+    },
+    "tall_720x2560.gpr": {
+      "type": "synthetic_gpr",
+      "size": 1843220,
+      "description": "Tall aspect ratio GPR file",
+      "source": "synthetic",
+      "width": 720,
+      "height": 2560,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "a625c172d90be17cfb19d8e6cd741ed2ececdcc7e4ba5a7d0f578753c91778f2"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "aspect_ratio_testing"
+      ]
+    },
+    "square_1024x1024.gpr": {
+      "type": "synthetic_gpr",
+      "size": 1048596,
+      "description": "Square aspect ratio GPR file",
+      "source": "synthetic",
+      "width": 1024,
+      "height": 1024,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "21998b56593a46e6900e9a8e02e23fc5aa76fda51b965dc1cdf93cd3f7d45278"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "aspect_ratio_testing"
+      ]
+    },
+    "corrupted_header.gpr": {
+      "type": "synthetic_gpr",
+      "size": 1018,
+      "description": "GPR file with corrupted header",
+      "source": "synthetic",
+      "width": 1920,
+      "height": 1080,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "a2ff39fef5ec7194cb7da6d6afafb81f09c98ce2d4e47e6c2c063c5b9274da10"
+      },
+      "use_cases": [
+        "error_handling",
+        "robustness_testing"
+      ]
+    },
+    "empty_file.gpr": {
+      "type": "synthetic_gpr",
+      "size": 0,
+      "description": "Empty GPR file",
+      "source": "synthetic",
+      "width": null,
+      "height": null,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "use_cases": [
+        "edge_case_testing",
+        "error_handling"
+      ]
+    },
+    "truncated_file.gpr": {
+      "type": "synthetic_gpr",
+      "size": 1036810,
+      "description": "GPR file that will be truncated",
+      "source": "synthetic",
+      "width": 1920,
+      "height": 1080,
+      "checksum": {
+        "algorithm": "sha256",
+        "value": "bc05494f8a28d8456d8ea955c0cfa9b2adbaa60c0a2f99aa359608af2dae3f48"
+      },
+      "use_cases": [
+        "conversion_testing",
+        "format_detection",
+        "integration_testing",
+        "incomplete_data_testing",
+        "error_handling"
+      ]
+    }
+  },
+  "synthetic_data": {
+    "small_gpr": {
+      "type": "synthetic_gpr",
+      "description": "Small synthetic GPR file for basic testing",
+      "dimensions": [
+        640,
+        480
+      ],
+      "use_cases": [
+        "unit_testing",
+        "performance_testing"
+      ]
+    },
+    "large_gpr": {
+      "type": "synthetic_gpr",
+      "description": "Large synthetic GPR file for stress testing",
+      "dimensions": [
+        4096,
+        3072
+      ],
+      "use_cases": [
+        "stress_testing",
+        "memory_testing"
+      ]
+    },
+    "corrupted_gpr": {
+      "type": "synthetic_gpr",
+      "description": "Intentionally corrupted GPR file for error handling testing",
+      "dimensions": [
+        1920,
+        1080
+      ],
+      "use_cases": [
+        "error_handling",
+        "robustness_testing"
+      ]
+    }
+  },
+  "expected_outputs": {
+    "2024_10_08_10-37-22_to_dng": {
+      "source_file": "2024_10_08_10-37-22.GPR",
+      "target_format": "dng",
+      "description": "Expected DNG output from real GPR file",
+      "checksum": {
+        "algorithm": "sha256",
+        "value": null
+      }
+    }
+  }
+}
