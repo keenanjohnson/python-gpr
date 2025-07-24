@@ -2,21 +2,46 @@
 Pytest configuration and fixtures for python-gpr test suite.
 
 This module provides pytest fixtures for test data management and common
-test utilities.
+test utilities. When pytest is not available, this module can still be
+imported without errors.
 """
 
-import pytest
+try:
+    import pytest
+    PYTEST_AVAILABLE = True
+except ImportError:
+    PYTEST_AVAILABLE = False
+    # Create dummy pytest object to prevent import errors
+    class DummyPytest:
+        def fixture(self, *args, **kwargs):
+            def decorator(func):
+                return func
+            return decorator
+    pytest = DummyPytest()
+
 import tempfile
 import shutil
 from pathlib import Path
 from typing import List, Dict, Any
 
-from .test_data import (
-    TestDataRegistry, 
-    SyntheticDataGenerator, 
-    get_test_data_manager,
-    validate_all_test_data
-)
+try:
+    from .test_data import (
+        TestDataRegistry, 
+        SyntheticDataGenerator, 
+        get_test_data_manager,
+        validate_all_test_data
+    )
+except ImportError:
+    # Handle case when running with unittest discovery
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from test_data import (
+        TestDataRegistry, 
+        SyntheticDataGenerator, 
+        get_test_data_manager,
+        validate_all_test_data
+    )
 
 
 @pytest.fixture(scope="session")

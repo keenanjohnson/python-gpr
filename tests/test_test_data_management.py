@@ -12,13 +12,26 @@ import json
 from pathlib import Path
 from unittest.mock import patch, mock_open
 
-from .test_data import (
-    TestDataRegistry,
-    SyntheticDataGenerator, 
-    get_test_data_manager,
-    validate_all_test_data,
-    ensure_test_data_available
-)
+try:
+    from .test_data import (
+        TestDataRegistry,
+        SyntheticDataGenerator, 
+        get_test_data_manager,
+        validate_all_test_data,
+        ensure_test_data_available
+    )
+except ImportError:
+    # Handle case when running with unittest discovery
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from test_data import (
+        TestDataRegistry,
+        SyntheticDataGenerator, 
+        get_test_data_manager,
+        validate_all_test_data,
+        ensure_test_data_available
+    )
 
 
 class TestDataRegistryTests(unittest.TestCase):
@@ -259,7 +272,11 @@ class TestDataPytestIntegrationTests(unittest.TestCase):
     def test_conftest_imports(self):
         """Test that conftest.py imports work correctly."""
         try:
-            from . import conftest
+            try:
+                from . import conftest
+            except ImportError:
+                # Handle case when running with unittest discovery
+                import conftest
             # If we get here, imports work
             self.assertTrue(True)
         except ImportError as e:
