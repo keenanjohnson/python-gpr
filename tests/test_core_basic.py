@@ -166,21 +166,22 @@ class TestGPRMetadata(unittest.TestCase):
             
         self.assertIn("GPR file not found", str(context.exception))
         
-    def test_metadata_properties_not_implemented(self):
-        """Test that metadata properties raise NotImplementedError."""
+    def test_metadata_properties_implemented(self):
+        """Test that metadata properties are now implemented and return values."""
         metadata = GPRMetadata(self.temp_file.name)
         
-        with self.assertRaises(NotImplementedError):
-            _ = metadata.camera_model
-            
-        with self.assertRaises(NotImplementedError):
-            _ = metadata.iso_speed
-            
-        with self.assertRaises(NotImplementedError):
-            _ = metadata.exposure_time
-            
-        with self.assertRaises(NotImplementedError):
-            _ = metadata.f_number
+        # Properties should now return values, not raise NotImplementedError
+        camera_model = metadata.camera_model
+        self.assertIsInstance(camera_model, str)
+        
+        iso_speed = metadata.iso_speed
+        self.assertIsInstance(iso_speed, int)
+        
+        exposure_time = metadata.exposure_time
+        self.assertIsInstance(exposure_time, float)
+        
+        f_number = metadata.f_number
+        self.assertIsInstance(f_number, float)
 
 
 class TestMetadataFunctions(unittest.TestCase):
@@ -201,9 +202,12 @@ class TestMetadataFunctions(unittest.TestCase):
             
     def test_extract_exif_with_existing_file(self):
         """Test extract_exif with existing file."""
-        # Should raise NotImplementedError but not FileNotFoundError
-        with self.assertRaises(NotImplementedError):
-            extract_exif(self.temp_file.name)
+        # Should now return metadata dictionary, not raise NotImplementedError
+        result = extract_exif(self.temp_file.name)
+        self.assertIsInstance(result, dict)
+        # Check that some expected EXIF fields are present
+        self.assertIn("camera_make", result)
+        self.assertIn("camera_model", result)
             
     def test_extract_exif_with_nonexistent_file(self):
         """Test extract_exif with non-existent file."""
@@ -216,9 +220,12 @@ class TestMetadataFunctions(unittest.TestCase):
         
     def test_extract_gpr_info_with_existing_file(self):
         """Test extract_gpr_info with existing file."""
-        # Should raise NotImplementedError but not FileNotFoundError
-        with self.assertRaises(NotImplementedError):
-            extract_gpr_info(self.temp_file.name)
+        # Should now return GPR metadata dictionary, not raise NotImplementedError
+        result = extract_gpr_info(self.temp_file.name)
+        self.assertIsInstance(result, dict)
+        # Check that some expected GPR fields are present
+        self.assertIn("input_width", result)
+        self.assertIn("input_height", result)
             
     def test_extract_gpr_info_with_nonexistent_file(self):
         """Test extract_gpr_info with non-existent file."""

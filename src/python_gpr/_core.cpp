@@ -481,6 +481,527 @@ bool convert_dng_to_dng(const std::string& input_path, const std::string& output
     }
 }
 
+// Metadata extraction functions
+
+// Extract EXIF metadata from a DNG/GPR file buffer
+py::dict extract_exif_metadata(const std::string& input_path) {
+    try {
+        validate_input_file(input_path);
+        
+        // Set up allocator
+        gpr_allocator allocator;
+        allocator.Alloc = gpr_global_malloc;
+        allocator.Free = gpr_global_free;
+        
+        // Initialize buffer and parameters
+        gpr_buffer input_buffer = {nullptr, 0};
+        gpr_parameters parameters;
+        bool parameters_initialized = false;
+        
+        try {
+            // Read input file
+            if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+                throw GPRFileError("Failed to read input file for metadata extraction", input_path, -1);
+            }
+            
+            // Initialize parameters to store metadata
+            gpr_parameters_set_defaults(&parameters);
+            parameters_initialized = true;
+            
+            // Parse metadata from the DNG/GPR file
+            bool success = gpr_parse_metadata(&allocator, &input_buffer, &parameters);
+            
+            if (!success) {
+                std::string context = get_error_context("metadata extraction", input_path);
+                throw GPRConversionError("Failed to parse metadata from file (" + context + ")");
+            }
+            
+            // Convert gpr_exif_info to Python dictionary
+            py::dict exif_dict;
+            const gpr_exif_info& exif = parameters.exif_info;
+            
+            // Basic camera information
+            exif_dict["camera_make"] = std::string(exif.camera_make);
+            exif_dict["camera_model"] = std::string(exif.camera_model);
+            exif_dict["camera_serial"] = std::string(exif.camera_serial);
+            exif_dict["software_version"] = std::string(exif.software_version);
+            exif_dict["user_comment"] = std::string(exif.user_comment);
+            exif_dict["image_description"] = std::string(exif.image_description);
+            
+            // Exposure settings
+            if (exif.exposure_time.denominator != 0) {
+                exif_dict["exposure_time"] = static_cast<double>(exif.exposure_time.numerator) / exif.exposure_time.denominator;
+                exif_dict["exposure_time_rational"] = py::make_tuple(exif.exposure_time.numerator, exif.exposure_time.denominator);
+            }
+            
+            if (exif.f_stop_number.denominator != 0) {
+                exif_dict["f_stop_number"] = static_cast<double>(exif.f_stop_number.numerator) / exif.f_stop_number.denominator;
+                exif_dict["f_stop_number_rational"] = py::make_tuple(exif.f_stop_number.numerator, exif.f_stop_number.denominator);
+            }
+            
+            if (exif.aperture.denominator != 0) {
+                exif_dict["aperture"] = static_cast<double>(exif.aperture.numerator) / exif.aperture.denominator;
+                exif_dict["aperture_rational"] = py::make_tuple(exif.aperture.numerator, exif.aperture.denominator);
+            }
+            
+            if (exif.focal_length.denominator != 0) {
+                exif_dict["focal_length"] = static_cast<double>(exif.focal_length.numerator) / exif.focal_length.denominator;
+                exif_dict["focal_length_rational"] = py::make_tuple(exif.focal_length.numerator, exif.focal_length.denominator);
+            }
+            
+            // ISO and other numeric values
+            exif_dict["iso_speed_rating"] = exif.iso_speed_rating;
+            exif_dict["focal_length_in_35mm_film"] = exif.focal_length_in_35mm_film;
+            exif_dict["saturation"] = exif.saturation;
+            
+            // Enum values
+            exif_dict["exposure_program"] = static_cast<int>(exif.exposure_program);
+            exif_dict["metering_mode"] = static_cast<int>(exif.metering_mode);
+            exif_dict["light_source"] = static_cast<int>(exif.light_source);
+            exif_dict["flash"] = static_cast<int>(exif.flash);
+            exif_dict["sharpness"] = static_cast<int>(exif.sharpness);
+            exif_dict["gain_control"] = static_cast<int>(exif.gain_control);
+            exif_dict["contrast"] = static_cast<int>(exif.contrast);
+            exif_dict["scene_capture_type"] = static_cast<int>(exif.scene_capture_type);
+            exif_dict["exposure_mode"] = static_cast<int>(exif.exposure_mode);
+            exif_dict["white_balance"] = static_cast<int>(exif.white_balance);
+            exif_dict["scene_type"] = static_cast<int>(exif.scene_type);
+            exif_dict["file_source"] = static_cast<int>(exif.file_source);
+            exif_dict["sensing_method"] = static_cast<int>(exif.sensing_method);
+            
+            // Date/time information
+            py::dict date_time_original;
+            date_time_original["year"] = exif.date_time_original.year;
+            date_time_original["month"] = exif.date_time_original.month;
+            date_time_original["day"] = exif.date_time_original.day;
+            date_time_original["hour"] = exif.date_time_original.hour;
+            date_time_original["minute"] = exif.date_time_original.minute;
+            date_time_original["second"] = exif.date_time_original.second;
+            exif_dict["date_time_original"] = date_time_original;
+            
+            py::dict date_time_digitized;
+            date_time_digitized["year"] = exif.date_time_digitized.year;
+            date_time_digitized["month"] = exif.date_time_digitized.month;
+            date_time_digitized["day"] = exif.date_time_digitized.day;
+            date_time_digitized["hour"] = exif.date_time_digitized.hour;
+            date_time_digitized["minute"] = exif.date_time_digitized.minute;
+            date_time_digitized["second"] = exif.date_time_digitized.second;
+            exif_dict["date_time_digitized"] = date_time_digitized;
+            
+            // Exposure bias
+            if (exif.exposure_bias.denominator != 0) {
+                exif_dict["exposure_bias"] = static_cast<double>(exif.exposure_bias.numerator) / exif.exposure_bias.denominator;
+                exif_dict["exposure_bias_rational"] = py::make_tuple(exif.exposure_bias.numerator, exif.exposure_bias.denominator);
+            }
+            
+            // Digital zoom
+            if (exif.digital_zoom.denominator != 0) {
+                exif_dict["digital_zoom"] = static_cast<double>(exif.digital_zoom.numerator) / exif.digital_zoom.denominator;
+                exif_dict["digital_zoom_rational"] = py::make_tuple(exif.digital_zoom.numerator, exif.digital_zoom.denominator);
+            }
+            
+            // GPS information if available
+            if (exif.gps_info.gps_info_valid) {
+                py::dict gps_dict;
+                gps_dict["valid"] = true;
+                gps_dict["version_id"] = exif.gps_info.version_id;
+                gps_dict["latitude_ref"] = std::string(exif.gps_info.latitude_ref, 2);
+                gps_dict["longitude_ref"] = std::string(exif.gps_info.longitude_ref, 2);
+                gps_dict["altitude_ref"] = exif.gps_info.altitude_ref;
+                gps_dict["satellites"] = std::string(exif.gps_info.satellites);
+                gps_dict["status"] = std::string(exif.gps_info.status, 2);
+                gps_dict["measure_mode"] = std::string(exif.gps_info.measure_mode, 2);
+                gps_dict["speed_ref"] = std::string(exif.gps_info.speed_ref, 2);
+                gps_dict["track_ref"] = std::string(exif.gps_info.track_ref, 2);
+                gps_dict["img_direction_ref"] = std::string(exif.gps_info.img_direction_ref, 2);
+                gps_dict["map_datum"] = std::string(exif.gps_info.map_datum);
+                gps_dict["dest_latitude_ref"] = std::string(exif.gps_info.dest_latitude_ref, 2);
+                gps_dict["dest_longitude_ref"] = std::string(exif.gps_info.dest_longitude_ref, 2);
+                gps_dict["dest_bearing_ref"] = std::string(exif.gps_info.dest_bearing_ref, 2);
+                gps_dict["dest_distance_ref"] = std::string(exif.gps_info.dest_distance_ref, 2);
+                gps_dict["processing_method"] = std::string(exif.gps_info.processing_method);
+                gps_dict["area_information"] = std::string(exif.gps_info.area_information);
+                gps_dict["date_stamp"] = std::string(exif.gps_info.date_stamp);
+                gps_dict["differential"] = exif.gps_info.differential;
+                
+                // GPS coordinates and other rational values
+                py::list latitude_list;
+                for (int i = 0; i < 3; i++) {
+                    if (exif.gps_info.latitude[i].denominator != 0) {
+                        latitude_list.append(py::make_tuple(exif.gps_info.latitude[i].numerator, exif.gps_info.latitude[i].denominator));
+                    }
+                }
+                gps_dict["latitude"] = latitude_list;
+                
+                py::list longitude_list;
+                for (int i = 0; i < 3; i++) {
+                    if (exif.gps_info.longitude[i].denominator != 0) {
+                        longitude_list.append(py::make_tuple(exif.gps_info.longitude[i].numerator, exif.gps_info.longitude[i].denominator));
+                    }
+                }
+                gps_dict["longitude"] = longitude_list;
+                
+                if (exif.gps_info.altitude.denominator != 0) {
+                    gps_dict["altitude"] = py::make_tuple(exif.gps_info.altitude.numerator, exif.gps_info.altitude.denominator);
+                }
+                
+                exif_dict["gps_info"] = gps_dict;
+            } else {
+                exif_dict["gps_info"] = py::dict();
+                exif_dict["gps_info"]["valid"] = false;
+            }
+            
+            // Clean up
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            
+            return exif_dict;
+            
+        } catch (const GPRError&) {
+            // Clean up on GPR-specific errors
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            throw; // Re-throw GPR errors as-is
+        } catch (const std::exception& e) {
+            // Clean up on other errors and wrap them
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            
+            std::string context = get_error_context("EXIF metadata extraction", input_path);
+            throw GPRConversionError("Error extracting EXIF metadata: " + std::string(e.what()) + " (" + context + ")");
+        } catch (...) {
+            // Clean up on unknown errors
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            
+            std::string context = get_error_context("EXIF metadata extraction", input_path);
+            throw GPRConversionError("Unknown error during EXIF metadata extraction (" + context + ")");
+        }
+        
+    } catch (const GPRError&) {
+        throw; // Re-throw GPR errors
+    } catch (const std::exception& e) {
+        // Wrap other errors as GPR errors
+        std::string context = get_error_context("EXIF metadata extraction setup", input_path);
+        throw GPRError("Setup error: " + std::string(e.what()) + " (" + context + ")");
+    }
+}
+
+// Extract GPR-specific metadata and tuning information
+py::dict extract_gpr_metadata(const std::string& input_path) {
+    try {
+        validate_input_file(input_path);
+        
+        // Set up allocator
+        gpr_allocator allocator;
+        allocator.Alloc = gpr_global_malloc;
+        allocator.Free = gpr_global_free;
+        
+        // Initialize buffer and parameters
+        gpr_buffer input_buffer = {nullptr, 0};
+        gpr_parameters parameters;
+        bool parameters_initialized = false;
+        
+        try {
+            // Read input file
+            if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+                throw GPRFileError("Failed to read input file for GPR metadata extraction", input_path, -1);
+            }
+            
+            // Initialize parameters to store metadata
+            gpr_parameters_set_defaults(&parameters);
+            parameters_initialized = true;
+            
+            // Parse metadata from the DNG/GPR file
+            bool success = gpr_parse_metadata(&allocator, &input_buffer, &parameters);
+            
+            if (!success) {
+                std::string context = get_error_context("GPR metadata extraction", input_path);
+                throw GPRConversionError("Failed to parse GPR metadata from file (" + context + ")");
+            }
+            
+            // Create GPR metadata dictionary
+            py::dict gpr_dict;
+            
+            // Basic parameters
+            gpr_dict["input_width"] = parameters.input_width;
+            gpr_dict["input_height"] = parameters.input_height;
+            gpr_dict["input_pitch"] = parameters.input_pitch;
+            gpr_dict["fast_encoding"] = parameters.fast_encoding;
+            gpr_dict["compute_md5sum"] = parameters.compute_md5sum;
+            gpr_dict["enable_preview"] = parameters.enable_preview;
+            
+            // Preview image information
+            py::dict preview_dict;
+            preview_dict["width"] = parameters.preview_image.preview_width;
+            preview_dict["height"] = parameters.preview_image.preview_height;
+            preview_dict["jpg_preview_size"] = parameters.preview_image.jpg_preview.size;
+            preview_dict["has_preview"] = (parameters.preview_image.jpg_preview.buffer != nullptr && 
+                                         parameters.preview_image.jpg_preview.size > 0);
+            gpr_dict["preview_image"] = preview_dict;
+            
+            // GPMF payload information
+            py::dict gpmf_dict;
+            gpmf_dict["size"] = parameters.gpmf_payload.size;
+            gpmf_dict["has_gpmf"] = (parameters.gpmf_payload.buffer != nullptr && parameters.gpmf_payload.size > 0);
+            gpr_dict["gpmf_payload"] = gpmf_dict;
+            
+            // Profile information
+            py::dict profile_dict;
+            // Note: The actual gpr_profile_info structure fields would be added here
+            // For now, we'll add a placeholder that indicates profile info is available
+            profile_dict["available"] = true;
+            gpr_dict["profile_info"] = profile_dict;
+            
+            // Tuning information  
+            py::dict tuning_dict;
+            // Note: The actual gpr_tuning_info structure fields would be added here
+            // For now, we'll add a placeholder that indicates tuning info is available
+            tuning_dict["available"] = true;
+            gpr_dict["tuning_info"] = tuning_dict;
+            
+            // Clean up
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            
+            return gpr_dict;
+            
+        } catch (const GPRError&) {
+            // Clean up on GPR-specific errors
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            throw; // Re-throw GPR errors as-is
+        } catch (const std::exception& e) {
+            // Clean up on other errors and wrap them
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            
+            std::string context = get_error_context("GPR metadata extraction", input_path);
+            throw GPRConversionError("Error extracting GPR metadata: " + std::string(e.what()) + " (" + context + ")");
+        } catch (...) {
+            // Clean up on unknown errors
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            
+            std::string context = get_error_context("GPR metadata extraction", input_path);
+            throw GPRConversionError("Unknown error during GPR metadata extraction (" + context + ")");
+        }
+        
+    } catch (const GPRError&) {
+        throw; // Re-throw GPR errors
+    } catch (const std::exception& e) {
+        // Wrap other errors as GPR errors
+        std::string context = get_error_context("GPR metadata extraction setup", input_path);
+        throw GPRError("Setup error: " + std::string(e.what()) + " (" + context + ")");
+    }
+}
+
+// Modify metadata in an existing file by creating a new file with updated metadata
+bool modify_metadata(const std::string& input_path, const std::string& output_path, const py::dict& exif_updates) {
+    try {
+        validate_input_file(input_path);
+        
+        // Set up allocator
+        gpr_allocator allocator;
+        allocator.Alloc = gpr_global_malloc;
+        allocator.Free = gpr_global_free;
+        
+        // Initialize buffers and parameters
+        gpr_buffer input_buffer = {nullptr, 0};
+        gpr_buffer output_buffer = {nullptr, 0};
+        gpr_parameters parameters;
+        bool parameters_initialized = false;
+        
+        try {
+            // Read input file
+            if (!read_file_to_buffer(input_path, &input_buffer, &allocator)) {
+                throw GPRFileError("Failed to read input file for metadata modification", input_path, -1);
+            }
+            
+            // Initialize parameters and parse existing metadata
+            gpr_parameters_set_defaults(&parameters);
+            parameters_initialized = true;
+            
+            // Parse existing metadata
+            bool success = gpr_parse_metadata(&allocator, &input_buffer, &parameters);
+            if (!success) {
+                std::string context = get_error_context("metadata parsing for modification", input_path);
+                throw GPRConversionError("Failed to parse existing metadata (" + context + ")");
+            }
+            
+            // Apply updates to EXIF info
+            gpr_exif_info& exif = parameters.exif_info;
+            
+            // Update string fields
+            for (auto item : exif_updates) {
+                std::string key = py::str(item.first);
+                
+                if (key == "camera_make" && py::isinstance<py::str>(item.second)) {
+                    std::string value = py::str(item.second);
+                    strncpy(exif.camera_make, value.c_str(), CAMERA_MAKE_SIZE - 1);
+                    exif.camera_make[CAMERA_MAKE_SIZE - 1] = '\0';
+                }
+                else if (key == "camera_model" && py::isinstance<py::str>(item.second)) {
+                    std::string value = py::str(item.second);
+                    strncpy(exif.camera_model, value.c_str(), CAMERA_MODEL_SIZE - 1);
+                    exif.camera_model[CAMERA_MODEL_SIZE - 1] = '\0';
+                }
+                else if (key == "camera_serial" && py::isinstance<py::str>(item.second)) {
+                    std::string value = py::str(item.second);
+                    strncpy(exif.camera_serial, value.c_str(), CAMERA_SERIAL_SIZE - 1);
+                    exif.camera_serial[CAMERA_SERIAL_SIZE - 1] = '\0';
+                }
+                else if (key == "software_version" && py::isinstance<py::str>(item.second)) {
+                    std::string value = py::str(item.second);
+                    strncpy(exif.software_version, value.c_str(), SOFTWARE_VERSION_SIZE - 1);
+                    exif.software_version[SOFTWARE_VERSION_SIZE - 1] = '\0';
+                }
+                else if (key == "user_comment" && py::isinstance<py::str>(item.second)) {
+                    std::string value = py::str(item.second);
+                    strncpy(exif.user_comment, value.c_str(), USER_COMMENT_SIZE - 1);
+                    exif.user_comment[USER_COMMENT_SIZE - 1] = '\0';
+                }
+                else if (key == "image_description" && py::isinstance<py::str>(item.second)) {
+                    std::string value = py::str(item.second);
+                    strncpy(exif.image_description, value.c_str(), IMAGE_DESCRIPTION_SIZE - 1);
+                    exif.image_description[IMAGE_DESCRIPTION_SIZE - 1] = '\0';
+                }
+                // Update numeric fields
+                else if (key == "iso_speed_rating" && py::isinstance<py::int_>(item.second)) {
+                    exif.iso_speed_rating = py::cast<uint16_t>(item.second);
+                }
+                else if (key == "focal_length_in_35mm_film" && py::isinstance<py::int_>(item.second)) {
+                    exif.focal_length_in_35mm_film = py::cast<uint16_t>(item.second);
+                }
+                else if (key == "saturation" && py::isinstance<py::int_>(item.second)) {
+                    exif.saturation = py::cast<uint16_t>(item.second);
+                }
+                // Update rational fields (expecting tuples)
+                else if (key == "exposure_time_rational" && py::isinstance<py::tuple>(item.second)) {
+                    py::tuple rational = py::cast<py::tuple>(item.second);
+                    if (rational.size() == 2) {
+                        exif.exposure_time.numerator = py::cast<uint32_t>(rational[0]);
+                        exif.exposure_time.denominator = py::cast<uint32_t>(rational[1]);
+                    }
+                }
+                else if (key == "f_stop_number_rational" && py::isinstance<py::tuple>(item.second)) {
+                    py::tuple rational = py::cast<py::tuple>(item.second);
+                    if (rational.size() == 2) {
+                        exif.f_stop_number.numerator = py::cast<uint32_t>(rational[0]);
+                        exif.f_stop_number.denominator = py::cast<uint32_t>(rational[1]);
+                    }
+                }
+                else if (key == "aperture_rational" && py::isinstance<py::tuple>(item.second)) {
+                    py::tuple rational = py::cast<py::tuple>(item.second);
+                    if (rational.size() == 2) {
+                        exif.aperture.numerator = py::cast<uint32_t>(rational[0]);
+                        exif.aperture.denominator = py::cast<uint32_t>(rational[1]);
+                    }
+                }
+                else if (key == "focal_length_rational" && py::isinstance<py::tuple>(item.second)) {
+                    py::tuple rational = py::cast<py::tuple>(item.second);
+                    if (rational.size() == 2) {
+                        exif.focal_length.numerator = py::cast<uint32_t>(rational[0]);
+                        exif.focal_length.denominator = py::cast<uint32_t>(rational[1]);
+                    }
+                }
+                // Update enum fields
+                else if (key == "exposure_program" && py::isinstance<py::int_>(item.second)) {
+                    exif.exposure_program = static_cast<gpr_exposure_program>(py::cast<int>(item.second));
+                }
+                else if (key == "metering_mode" && py::isinstance<py::int_>(item.second)) {
+                    exif.metering_mode = static_cast<gpr_metering_mode>(py::cast<int>(item.second));
+                }
+                else if (key == "light_source" && py::isinstance<py::int_>(item.second)) {
+                    exif.light_source = static_cast<gpr_light_source>(py::cast<int>(item.second));
+                }
+                else if (key == "white_balance" && py::isinstance<py::int_>(item.second)) {
+                    exif.white_balance = static_cast<gpr_white_balance>(py::cast<int>(item.second));
+                }
+            }
+            
+            // Convert back to DNG with updated metadata
+            success = gpr_convert_dng_to_dng(&allocator, &parameters, &input_buffer, &output_buffer);
+            
+            if (!success) {
+                std::string context = get_error_context("DNG conversion with updated metadata", input_path, output_path);
+                throw GPRConversionError("Failed to convert file with updated metadata (" + context + ")");
+            }
+            
+            // Validate output buffer
+            if (output_buffer.buffer == nullptr || output_buffer.size == 0) {
+                throw GPRConversionError("Conversion with updated metadata produced empty output buffer");
+            }
+            
+            // Write output file
+            if (!write_buffer_to_file(&output_buffer, output_path)) {
+                throw GPRFileError("Failed to write output file with updated metadata", output_path, -1);
+            }
+            
+            // Clean up
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            cleanup_buffer_safe(&output_buffer, allocator);
+            
+            return true;
+            
+        } catch (const GPRError&) {
+            // Clean up on GPR-specific errors
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            cleanup_buffer_safe(&output_buffer, allocator);
+            throw; // Re-throw GPR errors as-is
+        } catch (const std::exception& e) {
+            // Clean up on other errors and wrap them
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            cleanup_buffer_safe(&output_buffer, allocator);
+            
+            std::string context = get_error_context("metadata modification", input_path, output_path);
+            throw GPRConversionError("Error modifying metadata: " + std::string(e.what()) + " (" + context + ")");
+        } catch (...) {
+            // Clean up on unknown errors
+            if (parameters_initialized) {
+                gpr_parameters_destroy(&parameters, allocator.Free);
+            }
+            cleanup_buffer_safe(&input_buffer, allocator);
+            cleanup_buffer_safe(&output_buffer, allocator);
+            
+            std::string context = get_error_context("metadata modification", input_path, output_path);
+            throw GPRConversionError("Unknown error during metadata modification (" + context + ")");
+        }
+        
+    } catch (const GPRError&) {
+        throw; // Re-throw GPR errors
+    } catch (const std::exception& e) {
+        // Wrap other errors as GPR errors
+        std::string context = get_error_context("metadata modification setup", input_path, output_path);
+        throw GPRError("Setup error: " + std::string(e.what()) + " (" + context + ")");
+    }
+}
+
 // NumPy integration functions for raw image data access
 
 // Structure to hold image information
@@ -603,7 +1124,7 @@ py::array get_raw_image_data(const std::string& input_path, const std::string& d
             parameters_initialized = true;
             
             // Convert to raw format to get pixel data
-            bool success = gpr_convert_gpr_to_raw(&allocator, &parameters, &input_buffer, &output_buffer);
+            bool success = gpr_convert_gpr_to_raw(&allocator, &input_buffer, &output_buffer);
             
             if (!success) {
                 std::string context = get_error_context("GPR to raw conversion for data extraction", input_path);
@@ -631,8 +1152,7 @@ py::array get_raw_image_data(const std::string& input_path, const std::string& d
                     result = py::array_t<uint16_t>(
                         {info.height, info.width},  // shape
                         {info.width * sizeof(uint16_t), sizeof(uint16_t)},  // strides
-                        reinterpret_cast<uint16_t*>(output_buffer.buffer),  // data pointer
-                        py::cast(py::none())  // parent - we'll handle memory management
+                        reinterpret_cast<uint16_t*>(output_buffer.buffer)  // data pointer
                     );
                 } catch (const std::exception& e) {
                     throw GPRMemoryError("Failed to create uint16 NumPy array: " + std::string(e.what()));
@@ -641,7 +1161,8 @@ py::array get_raw_image_data(const std::string& input_path, const std::string& d
                 // Convert uint16 data to float32 and normalize
                 try {
                     auto float_array = py::array_t<float>(info.height * info.width);
-                    float* float_data = static_cast<float*>(float_array.mutable_ptr());
+                    auto buf = float_array.request();
+                    float* float_data = static_cast<float*>(buf.ptr);
                     uint16_t* raw_data = reinterpret_cast<uint16_t*>(output_buffer.buffer);
                     
                     if (float_data == nullptr || raw_data == nullptr) {
@@ -808,6 +1329,23 @@ PYBIND11_MODULE(_core, m) {
     m.def("convert_dng_to_dng", &convert_dng_to_dng,
           "Convert DNG file to DNG format (reprocess). Raises GPRConversionError on failure.",
           py::arg("input_path"), py::arg("output_path"));
+    
+    
+    // Metadata extraction functions
+    m.def("extract_exif_metadata", &extract_exif_metadata,
+          "Extract EXIF metadata from GPR/DNG file as Python dictionary. "
+          "Raises GPRFileError, GPRParameterError, or GPRConversionError on failure.",
+          py::arg("input_path"));
+    
+    m.def("extract_gpr_metadata", &extract_gpr_metadata,
+          "Extract GPR-specific metadata including compression parameters and tuning info. "
+          "Raises GPRFileError, GPRParameterError, or GPRConversionError on failure.",
+          py::arg("input_path"));
+    
+    m.def("modify_metadata", &modify_metadata,
+          "Modify metadata in a file by creating a new file with updated EXIF data. "
+          "Returns True on success. Raises GPRFileError or GPRConversionError on failure.",
+          py::arg("input_path"), py::arg("output_path"), py::arg("exif_updates"));
     
     // NumPy integration functions for raw image data access
     m.def("get_raw_image_data", &get_raw_image_data,

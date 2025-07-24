@@ -113,7 +113,7 @@ endif()
 
 # Create pybind11 module
 pybind11_add_module(_core
-    src/python_gpr/_core.cpp
+    src/python_gpr/_core_minimal.cpp
 )
 
 # Set properties for the module
