@@ -12,9 +12,15 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 # Try to import the actual module, fall back to mocking if build not available
+import sys
+from pathlib import Path
+
+# Add src to path so we can import the module
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
 try:
-    from src.python_gpr import metadata
-    from src.python_gpr.metadata import GPRMetadata, extract_exif, extract_gpr_info, modify_exif
+    import python_gpr.metadata as metadata
+    from python_gpr.metadata import GPRMetadata, extract_exif, extract_gpr_info, modify_exif
     BINDINGS_AVAILABLE = True
 except ImportError:
     # Mock the module if bindings are not available
@@ -49,7 +55,7 @@ class TestGPRMetadataExtraction(unittest.TestCase):
     def test_extract_exif_basic(self):
         """Test basic EXIF data extraction."""
         # This would work with actual GPR files
-        with patch('src.python_gpr._core.extract_exif_metadata') as mock_extract:
+        with patch('python_gpr.metadata._core.extract_exif_metadata') as mock_extract:
             mock_extract.return_value = {
                 "camera_make": "GoPro",
                 "camera_model": "HERO8 Black",
@@ -69,7 +75,7 @@ class TestGPRMetadataExtraction(unittest.TestCase):
     @unittest.skipUnless(BINDINGS_AVAILABLE, "GPR bindings not available")
     def test_extract_gpr_info_basic(self):
         """Test GPR-specific metadata extraction."""
-        with patch('src.python_gpr._core.extract_gpr_metadata') as mock_extract:
+        with patch('python_gpr.metadata._core.extract_gpr_metadata') as mock_extract:
             mock_extract.return_value = {
                 "input_width": 4000,
                 "input_height": 3000,
@@ -129,8 +135,8 @@ class TestGPRMetadataClass(unittest.TestCase):
     @unittest.skipUnless(BINDINGS_AVAILABLE, "GPR bindings not available")
     def test_gpr_metadata_properties(self):
         """Test GPRMetadata property access."""
-        with patch('src.python_gpr._core.extract_exif_metadata') as mock_exif, \
-             patch('src.python_gpr._core.extract_gpr_metadata') as mock_gpr:
+        with patch('python_gpr.metadata._core.extract_exif_metadata') as mock_exif, \
+             patch('python_gpr.metadata._core.extract_gpr_metadata') as mock_gpr:
              
             mock_exif.return_value = {
                 "camera_make": "GoPro",
@@ -191,7 +197,7 @@ class TestMetadataModification(unittest.TestCase):
     @unittest.skipUnless(BINDINGS_AVAILABLE, "GPR bindings not available")
     def test_modify_exif_basic(self):
         """Test basic EXIF modification."""
-        with patch('src.python_gpr._core.modify_metadata') as mock_modify:
+        with patch('python_gpr.metadata._core.modify_metadata') as mock_modify:
             mock_modify.return_value = True
             
             modify_exif(
@@ -215,9 +221,9 @@ class TestMetadataModification(unittest.TestCase):
     @unittest.skipUnless(BINDINGS_AVAILABLE, "GPR bindings not available")
     def test_gpr_metadata_save_with_metadata(self):
         """Test saving file with modified metadata through GPRMetadata class."""
-        with patch('src.python_gpr._core.extract_exif_metadata') as mock_exif, \
-             patch('src.python_gpr._core.extract_gpr_metadata') as mock_gpr, \
-             patch('src.python_gpr._core.modify_metadata') as mock_modify:
+        with patch('python_gpr.metadata._core.extract_exif_metadata') as mock_exif, \
+             patch('python_gpr.metadata._core.extract_gpr_metadata') as mock_gpr, \
+             patch('python_gpr.metadata._core.modify_metadata') as mock_modify:
              
             mock_exif.return_value = {"camera_make": "GoPro"}
             mock_gpr.return_value = {"input_width": 4000}
@@ -365,7 +371,7 @@ class TestEXIFFields(unittest.TestCase):
             "exposure_bias", "digital_zoom", "gps_info"
         ]
         
-        with patch('src.python_gpr._core.extract_exif_metadata') as mock_extract:
+        with patch('python_gpr.metadata._core.extract_exif_metadata') as mock_extract:
             # Create mock data with all expected fields
             mock_data = {field: f"test_{field}" for field in expected_fields}
             mock_data.update({
@@ -403,8 +409,8 @@ class TestDNGMetadata(unittest.TestCase):
     @unittest.skipUnless(BINDINGS_AVAILABLE, "GPR bindings not available")
     def test_dng_metadata_extraction(self):
         """Test DNG-specific metadata extraction."""
-        with patch('src.python_gpr._core.extract_exif_metadata') as mock_exif, \
-             patch('src.python_gpr._core.extract_gpr_metadata') as mock_gpr:
+        with patch('python_gpr.metadata._core.extract_exif_metadata') as mock_exif, \
+             patch('python_gpr.metadata._core.extract_gpr_metadata') as mock_gpr:
              
             mock_exif.return_value = {"camera_make": "Adobe"}
             mock_gpr.return_value = {"input_width": 6000, "input_height": 4000}
@@ -442,8 +448,8 @@ class TestMetadataPersistence(unittest.TestCase):
         original_make = "Original Make"
         modified_make = "Modified Make"
         
-        with patch('src.python_gpr._core.extract_exif_metadata') as mock_exif, \
-             patch('src.python_gpr._core.modify_metadata') as mock_modify:
+        with patch('python_gpr.metadata._core.extract_exif_metadata') as mock_exif, \
+             patch('python_gpr.metadata._core.modify_metadata') as mock_modify:
              
             # First call returns original metadata
             # Second call (after modification) returns modified metadata
