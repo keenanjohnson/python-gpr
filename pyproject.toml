@@ -78,6 +78,9 @@ Issues = "https://github.com/keenanjohnson/python-gpr/issues"
 minimum-version = "0.4"
 build-dir = "build/{wheel_tag}"
 install.components = ["Development"]
+# Include git submodules in source distribution
+sdist.include = ["gpr/**"]
+sdist.exclude = ["gpr/.git/**"]
 
 [tool.scikit-build.cmake.define]
 CMAKE_BUILD_TYPE = "Release"
@@ -147,4 +150,34 @@ markers = [
     "memory: marks tests as memory leak detection tests",
     "slow: marks tests as slow running",
     "long_running: marks tests that run for extended periods",
+]
+
+[tool.cibuildwheel]
+# Build wheels for Python 3.9-3.12 on multiple platforms
+build = "cp39-* cp310-* cp311-* cp312-*"
+skip = "*-musllinux*"  # Skip musl Linux for now due to potential compatibility issues
+
+# Environment variables for all platforms
+environment = { CMAKE_BUILD_TYPE = "Release" }
+
+# Test command to ensure wheels work
+test-command = "python -c 'import python_gpr; print(\"Wheel import test passed - version:\", getattr(python_gpr, \"__version__\", \"unknown\"))'"
+test-requires = ["numpy"]
+
+# Platform-specific settings
+[tool.cibuildwheel.linux]
+before-all = [
+    "yum install -y cmake3 gcc-c++ || apt-get update && apt-get install -y cmake build-essential",
+]
+environment = { CMAKE_BUILD_TYPE = "Release", CMAKE_POSITION_INDEPENDENT_CODE = "ON" }
+
+[tool.cibuildwheel.macos]
+before-all = [
+    "brew install cmake || true",  # Don't fail if already installed
+]
+environment = { CMAKE_BUILD_TYPE = "Release", CMAKE_OSX_DEPLOYMENT_TARGET = "10.9" }
+
+[tool.cibuildwheel.windows]
+before-all = [
+    "choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' || echo 'cmake might already be installed'",
 ]

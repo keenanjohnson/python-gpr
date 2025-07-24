@@ -131,6 +131,10 @@ dmypy.json
 # setuptools-scm version files
 src/python_gpr/_version.py
 
+# Wheel building artifacts
+wheelhouse/
+*.whl
+
 # IDE files
 .vscode/
 .idea/
