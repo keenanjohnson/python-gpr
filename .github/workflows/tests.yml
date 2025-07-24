@@ -62,10 +62,12 @@ jobs:
 
     - name: Install memory profiling dependencies (fallback)
       continue-on-error: true
+      shell: bash
       run: |
         pip install memory-profiler psutil || echo "Memory profiling dependencies installation failed"
 
     - name: Check installation status
+      shell: bash
       run: |
         if [ "${{ steps.install_dev.outcome }}" == "success" ]; then
           echo "✅ Package installed successfully with dev dependencies"
