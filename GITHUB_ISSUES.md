@@ -91,14 +91,14 @@ Configure modern Python packaging with pyproject.toml including all necessary me
 Set up automated testing and building pipeline using GitHub Actions to ensure code quality and cross-platform compatibility.
 
 **Tasks:**
-- Create workflow for testing on multiple Python versions (3.8-3.12)
+- Create workflow for testing on multiple Python versions (3.9-3.12)
 - Add support for multiple operating systems (Linux, macOS, Windows)
 - Configure automated testing and linting
 - Set up build artifact generation
 
 **Acceptance Criteria:**
 - [ ] CI runs on pull requests and pushes to main
-- [ ] Tests pass on Python 3.8, 3.9, 3.10, 3.11, 3.12
+- [ ] Tests pass on Python 3.9, 3.10, 3.11, 3.12
 - [ ] Builds work on Linux, macOS, and Windows
 - [ ] Linting and code quality checks are enforced
 
@@ -370,7 +370,7 @@ Implement performance benchmarks to ensure Python bindings maintain acceptable p
 Expand testing to cover multiple Python versions and operating systems to ensure broad compatibility.
 
 **Tasks:**
-- Test on Python 3.8, 3.9, 3.10, 3.11, 3.12
+- Test on Python 3.9, 3.10, 3.11, 3.12
 - Verify compatibility on Windows, macOS, Linux
 - Test with different NumPy versions
 - Add platform-specific test cases
