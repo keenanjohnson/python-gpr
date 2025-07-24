@@ -21,9 +21,43 @@ git submodule update --init --recursive
 
 The GPR library will be available in the `gpr/` subdirectory after running the submodule update command.
 
+## Compatibility
+
+Python-GPR is extensively tested across multiple platforms and versions:
+
+### Supported Platforms
+- **Linux** (Ubuntu 20.04+) - Primary development platform
+- **macOS** (11.0+) - Intel and Apple Silicon
+- **Windows** (10+) - x64 architecture
+
+### Python Versions
+- Python 3.9 through 3.12 (actively tested)
+- Python 3.13+ (may work, not yet tested)
+
+### NumPy Compatibility
+- NumPy 1.20.x through 2.1.x
+- Comprehensive compatibility testing across versions
+- Full support for NumPy 2.0+ with handling for breaking changes
+
+For detailed compatibility information, including known issues and platform-specific considerations, see [COMPATIBILITY_MATRIX.md](COMPATIBILITY_MATRIX.md).
+
+## CI/CD Testing
+
+The project uses GitHub Actions to run comprehensive cross-platform testing:
+
+- **153+ test cases** covering all functionality
+- **3 platforms**: Linux, macOS, Windows  
+- **4 Python versions**: 3.9, 3.10, 3.11, 3.12
+- **4 NumPy versions**: 1.20.x, 1.24.x, 2.0.x, latest
+- **Platform-specific tests** for OS-specific behaviors
+- **Memory management validation**
+- **Unicode and path handling verification**
+
+Tests run automatically on every push and pull request to ensure compatibility across the full matrix.
+
 ## Testing
 
-Run the unit tests to verify the setup:
+### Running Tests Locally
 
 ```bash
 # Run all tests
@@ -33,9 +67,20 @@ python -m unittest discover tests/ -v
 python -m unittest tests.test_core_basic -v
 python -m unittest tests.test_metadata_basic -v
 python -m unittest tests.test_numpy_integration -v
+python -m unittest tests.test_platform_compatibility -v
 ```
 
-The test suite includes comprehensive tests covering core functionality, error handling, NumPy integration, and project structure validation. No external dependencies are required for the basic tests.
+### Test Coverage
+
+The test suite includes:
+- **Core functionality tests** (153+ tests)
+- **Platform-specific compatibility tests** (14 tests)
+- **NumPy version compatibility validation**
+- **Memory management verification**
+- **Error handling across platforms**
+- **Unicode and file path testing**
+
+No external dependencies are required for the basic tests. All tests run on Python 3.9+ with any supported NumPy version.
 
 ## NumPy Integration
 
