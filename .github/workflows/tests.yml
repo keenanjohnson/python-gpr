@@ -51,23 +51,32 @@ jobs:
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' --yes
+      timeout-minutes: 10
 
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install build wheel
-        # Install specific NumPy version based on matrix
-        if [ "${{ matrix.numpy-version }}" = "latest" ]; then
-          pip install numpy
-        else
-          pip install "numpy==${{ matrix.numpy-version }}"
-        fi
+      shell: bash
+
+    - name: Install NumPy (latest)
+      if: matrix.numpy-version == 'latest'
+      run: |
+        pip install numpy
+      shell: bash
+
+    - name: Install NumPy (specific version)
+      if: matrix.numpy-version != 'latest'
+      run: |
+        pip install "numpy==${{ matrix.numpy-version }}"
       shell: bash
 
     - name: Run basic unit tests
       run: |
+        export PYTHONPATH="${PYTHONPATH}:src"
         python -m unittest tests.test_core_basic -v
+      shell: bash
 
     - name: Display environment info
       run: |
@@ -75,48 +84,64 @@ jobs:
         echo "Python: ${{ matrix.python-version }}"
         echo "NumPy target: ${{ matrix.numpy-version }}"
         python -c "import platform; print(f'Platform: {platform.system()} {platform.release()}')"
-        python -c "import numpy; print(f'NumPy version: {numpy.__version__}')"
         python -c "import sys; print(f'Python version: {sys.version}')"
+        python -c "import numpy; print(f'NumPy version: {numpy.__version__}')" || echo "NumPy not available"
+        export PYTHONPATH="${PYTHONPATH}:src"
+        python -c "import python_gpr; print(f'python_gpr version: {python_gpr.__version__}')" || echo "python_gpr import failed"
+      shell: bash
 
     - name: Try to install package with dev dependencies
       continue-on-error: true
       run: |
-        pip install -e .[dev]
+        # Try to install in development mode, fallback to just dev dependencies
+        pip install -e .[dev] || pip install pytest pytest-cov black flake8 mypy
+      shell: bash
 
     - name: Run pytest tests if available
       continue-on-error: true
       run: |
+        export PYTHONPATH="${PYTHONPATH}:src"
         python -m pytest tests/ -v --tb=short
+      shell: bash
 
     - name: Run unittest discovery
       run: |
+        export PYTHONPATH="${PYTHONPATH}:src"
         python -m unittest discover tests/ -v
+      shell: bash
 
     - name: Run platform-specific tests
       run: |
+        export PYTHONPATH="${PYTHONPATH}:src"
         python -m unittest tests.test_platform_compatibility -v
+      shell: bash
 
     - name: Run comprehensive tests (if specified)
       if: matrix.test-type == 'comprehensive'
       run: |
         echo "Running comprehensive test suite..."
+        export PYTHONPATH="${PYTHONPATH}:src"
         python -m unittest tests.test_numpy_integration -v
         python -m unittest tests.test_requirements_validation -v
+      shell: bash
 
     - name: Check code style with black (if available)
       continue-on-error: true
       run: |
         python -m black --check src/ tests/
+      shell: bash
 
     - name: Check with flake8 (if available)
       continue-on-error: true
       run: |
         python -m flake8 src/ tests/
+      shell: bash
 
     - name: Type check with mypy (if available)
       continue-on-error: true
       run: |
         python -m mypy src/
+      shell: bash
 
   # Job to test building (will be important once C++ bindings are added)
   build:
@@ -151,24 +176,29 @@ jobs:
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' --yes
+      timeout-minutes: 10
 
     - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
         pip install build wheel
+      shell: bash
 
     - name: Build package
       continue-on-error: true  # Allow failure since C++ bindings may not be ready
       run: |
         python -m build
+      shell: bash
 
     - name: Install package locally
       continue-on-error: true
       run: |
         pip install dist/*.whl
+      shell: bash
 
     - name: Test basic import after install
       continue-on-error: true
       run: |
         python -c "import python_gpr; print(f'Version: {python_gpr.__version__}')"
+      shell: bash
