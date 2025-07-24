@@ -205,7 +205,7 @@ raw_data = image.to_numpy()  # Returns numpy array
 ### Cross-platform Compatibility
 - Ensure GPR library builds correctly on all platforms
 - Handle platform-specific dependencies
-- Test with different Python versions (3.8+)
+- Test with different Python versions (3.9+)
 
 ## Dependencies
 

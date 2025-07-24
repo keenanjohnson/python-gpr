@@ -6,7 +6,7 @@ This document describes how to build and test the minimal pybind11 binding for p
 
 - CMake 3.15 or later
 - C++11 compatible compiler
-- Python 3.8 or later
+- Python 3.9 or later
 - pybind11 (install with `pip install pybind11`)
 
 ## Building

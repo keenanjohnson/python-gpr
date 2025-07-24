@@ -56,7 +56,7 @@ class TestProjectMetadata(unittest.TestCase):
         with open(self.pyproject_path, 'r', encoding='utf-8') as f:
             content = f.read()
         self.assertIn("requires-python =", content, "pyproject.toml should contain Python version requirement")
-        self.assertIn("3.8", content, "pyproject.toml should support Python 3.8+")
+        self.assertIn("3.9", content, "pyproject.toml should support Python 3.9+")
         
     def test_pyproject_contains_dependencies(self):
         """Test that pyproject.toml contains dependencies section."""
