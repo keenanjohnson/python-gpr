@@ -15,9 +15,21 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from python_gpr.memory_profiler import run_memory_stress_test
-from python_gpr.core import GPRImage, get_gpr_info
-from python_gpr.metadata import GPRMetadata, extract_exif, extract_gpr_info
+try:
+    from python_gpr.memory_profiler import run_memory_stress_test
+    from python_gpr.core import GPRImage, get_gpr_info
+    from python_gpr.metadata import GPRMetadata, extract_exif, extract_gpr_info
+    IMPORTS_AVAILABLE = True
+except ImportError as e:
+    print(f"ERROR: Failed to import python_gpr modules: {e}")
+    print(f"Current working directory: {Path.cwd()}")
+    print(f"Python path: {sys.path}")
+    print("\nThis likely means:")
+    print("1. The package is not installed properly")
+    print("2. You need to install dependencies: pip install -e .[dev]")
+    print("3. You need to build the C++ extensions first")
+    print("\nExiting with status code 1...")
+    sys.exit(1)
 
 
 def create_test_file():
